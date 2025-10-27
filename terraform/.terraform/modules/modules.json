@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"s3","Source":"./modules/s3","Dir":"modules/s3"},{"Key":"sagemaker","Source":"./modules/sagemaker","Dir":"modules/sagemaker"},{"Key":"sagemaker_pipeline","Source":"./modules/sagemaker-pipeline","Dir":"modules/sagemaker-pipeline"}]}
