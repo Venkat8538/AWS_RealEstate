@@ -55,7 +55,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           RoleArn = var.sagemaker_role_arn
           ResourceConfig = {
-            InstanceType   = "ml.t3.medium"
+            InstanceType   = "ml.m5.large"
             InstanceCount  = 1
             VolumeSizeInGB = 20
           }

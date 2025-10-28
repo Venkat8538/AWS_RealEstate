@@ -110,3 +110,4 @@ if __name__ == "__main__":
 # Test fast pipeline
 # Test optimized 3-stage pipeline
 # Test fixed ModelTraining step
+# Test with ml.m5.large for training
