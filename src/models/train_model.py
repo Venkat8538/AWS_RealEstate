@@ -113,3 +113,4 @@ if __name__ == "__main__":
 # Test with ml.m5.large for training
 # Test all processing jobs
 # Test current pipeline outputs
+# Test with actual scripts
