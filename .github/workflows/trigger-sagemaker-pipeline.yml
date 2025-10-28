@@ -43,11 +43,17 @@ jobs:
           echo "✅ Scripts uploaded to S3"
 
       - name: Create/Update SageMaker Pipeline
+        env:
+          S3_BUCKET: house-price-mlops-dev-itzi2hgi
+          SAGEMAKER_ROLE_ARN: arn:aws:iam::482227257362:role/house-price-sagemaker-execution-role
         run: |
           python create_ml_pipeline.py
           echo "✅ SageMaker Pipeline created/updated"
 
       - name: Execute SageMaker Pipeline
+        env:
+          S3_BUCKET: house-price-mlops-dev-itzi2hgi
+          PIPELINE_NAME: house-price-mlops-pipeline
         run: |
           python execute_pipeline.py --monitor
           echo "✅ SageMaker Pipeline execution completed"

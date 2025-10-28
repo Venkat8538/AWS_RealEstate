@@ -18,9 +18,14 @@ import os
 
 def get_pipeline_config():
     """Get pipeline configuration from environment or defaults"""
+    bucket_name = os.getenv('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+    # Remove s3:// prefix if present
+    if bucket_name.startswith('s3://'):
+        bucket_name = bucket_name.replace('s3://', '').split('/')[0]
+    
     return {
         'role': os.getenv('SAGEMAKER_ROLE_ARN', 'arn:aws:iam::482227257362:role/house-price-sagemaker-execution-role'),
-        'bucket': os.getenv('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi'),
+        'bucket': bucket_name,
         'project_name': os.getenv('PROJECT_NAME', 'house-price'),
         'region': os.getenv('AWS_REGION', 'us-east-1')
     }
