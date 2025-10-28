@@ -104,3 +104,4 @@ if __name__ == "__main__":
     # Exit successfully
     sys.exit(0)
 # Test OIDC fix
+# Test cost optimization

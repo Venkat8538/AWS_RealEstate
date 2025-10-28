@@ -10,12 +10,12 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       {
         Name         = "ProcessingInstanceType"
         Type         = "String"
-        DefaultValue = "ml.m5.large"
+        DefaultValue = "ml.t3.medium"
       },
       {
         Name         = "TrainingInstanceType"
         Type         = "String"
-        DefaultValue = "ml.m5.large"
+        DefaultValue = "ml.t3.medium"
       }
     ]
     Steps = [
@@ -25,9 +25,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
         Arguments = {
           ProcessingResources = {
             ClusterConfig = {
-              InstanceType   = "ml.m5.large"
+              InstanceType   = "ml.t3.medium"
               InstanceCount  = 1
-              VolumeSizeInGB = 30
+              VolumeSizeInGB = 20
             }
           }
           AppSpecification = {
@@ -44,9 +44,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
         Arguments = {
           ProcessingResources = {
             ClusterConfig = {
-              InstanceType   = "ml.m5.large"
+              InstanceType   = "ml.t3.medium"
               InstanceCount  = 1
-              VolumeSizeInGB = 30
+              VolumeSizeInGB = 20
             }
           }
           AppSpecification = {
@@ -67,9 +67,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           RoleArn = var.sagemaker_role_arn
           ResourceConfig = {
-            InstanceType   = "ml.m5.large"
+            InstanceType   = "ml.t3.medium"
             InstanceCount  = 1
-            VolumeSizeInGB = 30
+            VolumeSizeInGB = 20
           }
           StoppingCondition = {
             MaxRuntimeInSeconds = 3600
