@@ -115,3 +115,4 @@ if __name__ == "__main__":
 # Test current pipeline outputs
 # Test with actual scripts
 # Test CI/CD with S3 scripts
+# Test with S3 permissions fixed

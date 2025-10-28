@@ -33,7 +33,7 @@ resource "aws_iam_role" "github_actions" {
   })
 }
 
-# Policy for EventBridge access
+# Policy for EventBridge and S3 access
 resource "aws_iam_role_policy" "github_eventbridge_policy" {
   name = "${var.project_name}-github-eventbridge-policy"
   role = aws_iam_role.github_actions.id
@@ -47,6 +47,14 @@ resource "aws_iam_role_policy" "github_eventbridge_policy" {
           "events:PutEvents"
         ]
         Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:PutObjectAcl"
+        ]
+        Resource = "arn:aws:s3:::house-price-mlops-dev-itzi2hgi/scripts/*"
       }
     ]
   })
