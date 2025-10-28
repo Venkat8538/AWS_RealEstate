@@ -14,7 +14,8 @@ def get_pipeline_config():
     """Get pipeline configuration from environment or defaults"""
     return {
         'pipeline_name': os.getenv('PIPELINE_NAME', 'house-price-mlops-pipeline'),
-        'region': os.getenv('AWS_REGION', 'us-east-1')
+        'region': os.getenv('AWS_REGION', 'us-east-1'),
+        'bucket': os.getenv('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
     }
 
 def execute_pipeline():
