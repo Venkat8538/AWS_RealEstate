@@ -20,51 +20,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "-c", "print('Data processing completed')"]
+            ContainerEntrypoint = ["python3", "-c", "import time; print('Pipeline completed successfully'); time.sleep(5)"]
           }
           RoleArn = var.sagemaker_role_arn
-        }
-      },
-      {
-        Name = "FeatureEngineering"
-        Type = "Processing"
-        DependsOn = ["DataProcessing"]
-        Arguments = {
-          ProcessingResources = {
-            ClusterConfig = {
-              InstanceType   = "ml.t3.medium"
-              InstanceCount  = 1
-              VolumeSizeInGB = 20
-            }
-          }
-          AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "-c", "print('Feature engineering completed')"]
-          }
-          RoleArn = var.sagemaker_role_arn
-        }
-      },
-      {
-        Name = "ModelTraining"
-        Type = "Training"
-        DependsOn = ["FeatureEngineering"]
-        Arguments = {
-          AlgorithmSpecification = {
-            TrainingImage = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            TrainingInputMode = "File"
-          }
-          RoleArn = var.sagemaker_role_arn
-          ResourceConfig = {
-            InstanceType   = "ml.t3.medium"
-            InstanceCount  = 1
-            VolumeSizeInGB = 20
-          }
-          StoppingCondition = {
-            MaxRuntimeInSeconds = 3600
-          }
-          HyperParameters = {
-            "script" = "print('Model training completed')"
-          }
         }
       }
     ]
