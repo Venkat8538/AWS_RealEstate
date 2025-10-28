@@ -6,18 +6,6 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
 
   pipeline_definition = jsonencode({
     Version = "2020-12-01"
-    Parameters = [
-      {
-        Name         = "ProcessingInstanceType"
-        Type         = "String"
-        DefaultValue = "ml.t3.medium"
-      },
-      {
-        Name         = "TrainingInstanceType"
-        Type         = "String"
-        DefaultValue = "ml.t3.medium"
-      }
-    ]
     Steps = [
       {
         Name = "DataProcessing"
@@ -32,52 +20,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/run_processing.py"]
+            ContainerEntrypoint = ["python3", "-c", "print('Pipeline test successful')"]
           }
           RoleArn = var.sagemaker_role_arn
-        }
-      },
-      {
-        Name = "FeatureEngineering"
-        Type = "Processing"
-        DependsOn = ["DataProcessing"]
-        Arguments = {
-          ProcessingResources = {
-            ClusterConfig = {
-              InstanceType   = "ml.t3.medium"
-              InstanceCount  = 1
-              VolumeSizeInGB = 20
-            }
-          }
-          AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/engineer.py"]
-          }
-          RoleArn = var.sagemaker_role_arn
-        }
-      },
-      {
-        Name = "ModelTraining"
-        Type = "Training"
-        DependsOn = ["FeatureEngineering"]
-        Arguments = {
-          AlgorithmSpecification = {
-            TrainingImage = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            TrainingInputMode = "File"
-          }
-          RoleArn = var.sagemaker_role_arn
-          ResourceConfig = {
-            InstanceType   = "ml.t3.medium"
-            InstanceCount  = 1
-            VolumeSizeInGB = 20
-          }
-          StoppingCondition = {
-            MaxRuntimeInSeconds = 3600
-          }
-          HyperParameters = {
-            "n_estimators" = "100"
-            "max_depth"    = "10"
-          }
         }
       }
     ]

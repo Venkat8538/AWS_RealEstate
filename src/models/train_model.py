@@ -105,3 +105,4 @@ if __name__ == "__main__":
     sys.exit(0)
 # Test OIDC fix
 # Test cost optimization
+# Test simplified pipeline
