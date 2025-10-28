@@ -114,3 +114,4 @@ if __name__ == "__main__":
 # Test all processing jobs
 # Test current pipeline outputs
 # Test with actual scripts
+# Test CI/CD with S3 scripts

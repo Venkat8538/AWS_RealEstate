@@ -17,11 +17,21 @@ jobs:
       contents: read
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
+
+      - name: Upload ML scripts to S3
+        run: |
+          aws s3 cp src/data/run_processing.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          aws s3 cp src/features/engineer.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          aws s3 cp src/models/train_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          echo "✅ Scripts uploaded to S3"
 
       - name: Send Event to EventBridge
         run: |

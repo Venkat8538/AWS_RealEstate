@@ -20,7 +20,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "src/data/run_processing.py"]
+            ContainerEntrypoint = ["python3", "-c", "import boto3;s3=boto3.client('s3');s3.download_file('house-price-mlops-dev-itzi2hgi','scripts/run_processing.py','/tmp/script.py');exec(open('/tmp/script.py').read())"]
           }
           RoleArn = var.sagemaker_role_arn
         }
@@ -39,7 +39,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "src/features/engineer.py"]
+            ContainerEntrypoint = ["python3", "-c", "import boto3;s3=boto3.client('s3');s3.download_file('house-price-mlops-dev-itzi2hgi','scripts/engineer.py','/tmp/script.py');exec(open('/tmp/script.py').read())"]
           }
           RoleArn = var.sagemaker_role_arn
         }
@@ -58,7 +58,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           }
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            ContainerEntrypoint = ["python3", "src/models/train_model.py"]
+            ContainerEntrypoint = ["python3", "-c", "import boto3;s3=boto3.client('s3');s3.download_file('house-price-mlops-dev-itzi2hgi','scripts/train_model.py','/tmp/script.py');exec(open('/tmp/script.py').read())"]
           }
           RoleArn = var.sagemaker_role_arn
         }
