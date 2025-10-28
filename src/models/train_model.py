@@ -106,3 +106,4 @@ if __name__ == "__main__":
 # Test OIDC fix
 # Test cost optimization
 # Test simplified pipeline
+# Test complete pipeline
