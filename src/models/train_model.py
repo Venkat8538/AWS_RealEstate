@@ -108,3 +108,4 @@ if __name__ == "__main__":
 # Test simplified pipeline
 # Test complete pipeline
 # Test fast pipeline
+# Test optimized 3-stage pipeline
