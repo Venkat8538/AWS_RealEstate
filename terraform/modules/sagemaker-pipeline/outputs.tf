@@ -1,9 +1,11 @@
-output "pipeline_arn" {
-  description = "ARN of the SageMaker Pipeline"
-  value       = aws_sagemaker_pipeline.mlops_pipeline.arn
-}
+# Pipeline outputs removed - pipeline is now created via Python SDK
+# The pipeline ARN and name can be retrieved using:
+# aws sagemaker describe-pipeline --pipeline-name <pipeline-name>
 
-output "pipeline_name" {
-  description = "Name of the SageMaker Pipeline"
-  value       = aws_sagemaker_pipeline.mlops_pipeline.pipeline_name
+output "pipeline_info" {
+  description = "Information about pipeline creation"
+  value = {
+    message = "Pipeline is created via Python SDK using create_ml_pipeline.py"
+    expected_name = "${var.project_name}-mlops-pipeline"
+  }
 }

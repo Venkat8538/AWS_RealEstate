@@ -1,4 +1,4 @@
-name: Trigger SageMaker Pipeline
+name: Deploy and Execute SageMaker Pipeline
 
 'on':
   push:
@@ -8,9 +8,10 @@ name: Trigger SageMaker Pipeline
       - src/**
       - notebooks/**
       - data/**
+      - create_ml_pipeline.py
 
 jobs:
-  trigger-pipeline:
+  deploy-and-execute-pipeline:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -19,6 +20,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install -r pipeline_requirements.txt
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -29,22 +39,24 @@ jobs:
       - name: Upload ML scripts to S3
         run: |
           aws s3 cp src/data/run_processing.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/features/engineer.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           aws s3 cp src/models/train_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           echo "✅ Scripts uploaded to S3"
 
-      - name: Send Event to EventBridge
+      - name: Create/Update SageMaker Pipeline
         run: |
-          aws events put-events \
-            --entries '[{
-              "Source": "github.mlops",
-              "DetailType": "ML Pipeline Trigger",
-              "Detail": "{\"repository\":\"${{ github.repository }}\",\"commit\":\"${{ github.sha }}\",\"branch\":\"${{ github.ref_name }}\",\"trigger\":\"code_change\"}"
-            }]'
+          python create_ml_pipeline.py
+          echo "✅ SageMaker Pipeline created/updated"
 
-      - name: Verify Pipeline Trigger
+      - name: Execute SageMaker Pipeline
         run: |
-          echo "✅ SageMaker Pipeline trigger event sent successfully"
+          python execute_pipeline.py --monitor
+          echo "✅ SageMaker Pipeline execution completed"
+
+      - name: Pipeline Summary
+        run: |
+          echo "🎉 ML Pipeline Deployment Summary:"
           echo "Repository: ${{ github.repository }}"
           echo "Commit: ${{ github.sha }}"
           echo "Branch: ${{ github.ref_name }}"
+          echo "Pipeline: house-price-mlops-pipeline"
+          echo "Status: Deployed and Executed"
