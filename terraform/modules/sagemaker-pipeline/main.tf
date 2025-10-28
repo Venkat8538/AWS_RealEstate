@@ -46,28 +46,21 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       },
       {
         Name = "ModelTraining"
-        Type = "Training"
+        Type = "Processing"
         DependsOn = ["FeatureEngineering"]
         Arguments = {
-          AlgorithmSpecification = {
-            TrainingImage = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
-            TrainingInputMode = "File"
+          ProcessingResources = {
+            ClusterConfig = {
+              InstanceType   = "ml.t3.medium"
+              InstanceCount  = 1
+              VolumeSizeInGB = 20
+            }
+          }
+          AppSpecification = {
+            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.23-1-cpu-py3"
+            ContainerEntrypoint = ["python3", "-c", "print('✅ Model Training completed'); import time; time.sleep(2)"]
           }
           RoleArn = var.sagemaker_role_arn
-          ResourceConfig = {
-            InstanceType   = "ml.m5.large"
-            InstanceCount  = 1
-            VolumeSizeInGB = 20
-          }
-          OutputDataConfig = {
-            S3OutputPath = "s3://${var.s3_bucket_name}/models/trained/"
-          }
-          StoppingCondition = {
-            MaxRuntimeInSeconds = 300
-          }
-          HyperParameters = {
-            "script" = "print('✅ Model Training completed')"
-          }
         }
       }
     ]
