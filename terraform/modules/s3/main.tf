@@ -75,6 +75,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "mlops_lifecycle" {
     id     = "cost_optimization"
     status = "Enabled"
 
+    filter {
+      prefix = ""
+    }
+
     # Move to cheaper storage after 30 days
     transition {
       days          = 30

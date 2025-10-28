@@ -15,3 +15,9 @@ variable "environment" {
   type        = string
   default     = "dev"
 }
+
+variable "github_repository" {
+  description = "GitHub repository in format 'owner/repo'"
+  type        = string
+  default     = "your-org/house-price-predictor"
+}

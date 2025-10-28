@@ -1,0 +1,39 @@
+name: Trigger SageMaker Pipeline
+
+on:
+  push:
+    branches: [main]
+    paths: 
+      - 'src/**'
+      - 'notebooks/**'
+      - 'data/**'
+
+jobs:
+  trigger-pipeline:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    
+    steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+        aws-region: us-east-1
+
+    - name: Send Event to EventBridge
+      run: |
+        aws events put-events \
+          --entries '[{
+            "Source": "github.mlops",
+            "DetailType": "ML Pipeline Trigger",
+            "Detail": "{\"repository\":\"${{ github.repository }}\",\"commit\":\"${{ github.sha }}\",\"branch\":\"${{ github.ref_name }}\",\"trigger\":\"code_change\"}"
+          }]'
+
+    - name: Verify Pipeline Trigger
+      run: |
+        echo "✅ SageMaker Pipeline trigger event sent successfully"
+        echo "Repository: ${{ github.repository }}"
+        echo "Commit: ${{ github.sha }}"
+        echo "Branch: ${{ github.ref_name }}"

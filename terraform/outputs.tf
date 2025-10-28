@@ -32,3 +32,13 @@ output "sagemaker_user_profile_arn" {
   description = "ARN of the SageMaker User Profile"
   value       = module.sagemaker.sagemaker_user_profile_arn
 }
+
+output "eventbridge_rule_arn" {
+  description = "ARN of the EventBridge rule for pipeline triggers"
+  value       = module.eventbridge.eventbridge_rule_arn
+}
+
+output "github_actions_role_arn" {
+  description = "ARN of the GitHub Actions IAM role"
+  value       = module.github_oidc.github_actions_role_arn
+}

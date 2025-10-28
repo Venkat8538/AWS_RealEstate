@@ -44,3 +44,20 @@ module "sagemaker_pipeline" {
   sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
   s3_bucket_name      = module.s3.bucket_name
 }
+
+# EventBridge Module for GitHub Integration
+module "eventbridge" {
+  source = "./modules/eventbridge"
+  
+  project_name          = var.project_name
+  environment           = var.environment
+  sagemaker_pipeline_arn = module.sagemaker_pipeline.pipeline_arn
+}
+
+# GitHub OIDC Module for secure authentication
+module "github_oidc" {
+  source = "./modules/github-oidc"
+  
+  project_name      = var.project_name
+  github_repository = var.github_repository
+}
