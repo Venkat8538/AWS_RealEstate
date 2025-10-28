@@ -13,14 +13,9 @@ output "sagemaker_execution_role_arn" {
   value       = module.sagemaker.sagemaker_execution_role_arn
 }
 
-output "sagemaker_pipeline_arn" {
-  description = "ARN of the SageMaker Pipeline"
-  value       = module.sagemaker_pipeline.pipeline_arn
-}
-
-output "sagemaker_pipeline_name" {
-  description = "Name of the SageMaker Pipeline"
-  value       = module.sagemaker_pipeline.pipeline_name
+output "sagemaker_pipeline_info" {
+  description = "Information about SageMaker Pipeline"
+  value       = module.sagemaker_pipeline.pipeline_info
 }
 
 output "sagemaker_domain_id" {
@@ -33,10 +28,11 @@ output "sagemaker_user_profile_arn" {
   value       = module.sagemaker.sagemaker_user_profile_arn
 }
 
-output "eventbridge_rule_arn" {
-  description = "ARN of the EventBridge rule for pipeline triggers"
-  value       = module.eventbridge.eventbridge_rule_arn
-}
+# EventBridge outputs removed - using direct GitHub Actions pipeline execution
+# output "eventbridge_rule_arn" {
+#   description = "ARN of the EventBridge rule for pipeline triggers"
+#   value       = module.eventbridge.eventbridge_rule_arn
+# }
 
 output "github_actions_role_arn" {
   description = "ARN of the GitHub Actions IAM role"

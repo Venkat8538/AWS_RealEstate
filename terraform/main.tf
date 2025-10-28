@@ -45,19 +45,20 @@ module "sagemaker_pipeline" {
   s3_bucket_name      = module.s3.bucket_name
 }
 
-# EventBridge Module for GitHub Integration
-module "eventbridge" {
-  source = "./modules/eventbridge"
-  
-  project_name          = var.project_name
-  environment           = var.environment
-  sagemaker_pipeline_arn = module.sagemaker_pipeline.pipeline_arn
-}
+# EventBridge Module for GitHub Integration (optional - pipeline now uses Python SDK)
+# module "eventbridge" {
+#   source = "./modules/eventbridge"
+#   
+#   project_name          = var.project_name
+#   environment           = var.environment
+# }
 
 # GitHub OIDC Module for secure authentication
 module "github_oidc" {
   source = "./modules/github-oidc"
   
-  project_name      = var.project_name
-  github_repository = var.github_repository
+  project_name        = var.project_name
+  github_repository   = var.github_repository
+  s3_bucket_name      = module.s3.bucket_name
+  sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
 }

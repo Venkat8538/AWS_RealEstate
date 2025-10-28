@@ -33,9 +33,9 @@ resource "aws_iam_role" "github_actions" {
   })
 }
 
-# Policy for EventBridge and S3 access
-resource "aws_iam_role_policy" "github_eventbridge_policy" {
-  name = "${var.project_name}-github-eventbridge-policy"
+# Policy for SageMaker Pipeline management
+resource "aws_iam_role_policy" "github_sagemaker_policy" {
+  name = "${var.project_name}-github-sagemaker-policy"
   role = aws_iam_role.github_actions.id
 
   policy = jsonencode({
@@ -44,17 +44,36 @@ resource "aws_iam_role_policy" "github_eventbridge_policy" {
       {
         Effect = "Allow"
         Action = [
-          "events:PutEvents"
+          "sagemaker:CreatePipeline",
+          "sagemaker:UpdatePipeline",
+          "sagemaker:DescribePipeline",
+          "sagemaker:ListPipelines",
+          "sagemaker:StartPipelineExecution",
+          "sagemaker:DescribePipelineExecution",
+          "sagemaker:ListPipelineExecutions"
         ]
         Resource = "*"
       },
       {
         Effect = "Allow"
         Action = [
+          "s3:GetObject",
           "s3:PutObject",
-          "s3:PutObjectAcl"
+          "s3:DeleteObject",
+          "s3:ListBucket",
+          "s3:GetBucketLocation"
         ]
-        Resource = "arn:aws:s3:::house-price-mlops-dev-itzi2hgi/scripts/*"
+        Resource = [
+          "arn:aws:s3:::${var.s3_bucket_name}",
+          "arn:aws:s3:::${var.s3_bucket_name}/*"
+        ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "iam:PassRole"
+        ]
+        Resource = var.sagemaker_role_arn
       }
     ]
   })
