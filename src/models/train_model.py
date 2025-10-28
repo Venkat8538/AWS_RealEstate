@@ -1,3 +1,4 @@
+# Model training script for real estate price prediction
 import pandas as pd
 import numpy as np
 import joblib
