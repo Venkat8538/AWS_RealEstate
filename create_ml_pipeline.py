@@ -34,8 +34,8 @@ def create_ml_pipeline():
     """Create comprehensive SageMaker ML Pipeline"""
     config = get_pipeline_config()
     
-    # Initialize SageMaker session with our bucket
-    pipeline_session = PipelineSession(default_bucket=config['bucket'])
+    # Initialize SageMaker session
+    pipeline_session = PipelineSession()
     
     # Pipeline parameters
     input_data = ParameterString(
