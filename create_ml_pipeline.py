@@ -2,6 +2,7 @@
 """
 SageMaker Pipeline for House Price Prediction
 This script creates a complete ML pipeline with data processing, training, and model registration
+Updated: Testing workflow trigger with fixed permissions
 """
 
 import boto3
