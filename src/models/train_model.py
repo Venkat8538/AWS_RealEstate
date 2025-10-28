@@ -109,3 +109,4 @@ if __name__ == "__main__":
 # Test complete pipeline
 # Test fast pipeline
 # Test optimized 3-stage pipeline
+# Test fixed ModelTraining step

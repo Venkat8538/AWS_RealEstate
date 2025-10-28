@@ -59,6 +59,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
             InstanceCount  = 1
             VolumeSizeInGB = 20
           }
+          OutputDataConfig = {
+            S3OutputPath = "s3://${var.s3_bucket_name}/models/trained/"
+          }
           StoppingCondition = {
             MaxRuntimeInSeconds = 300
           }
