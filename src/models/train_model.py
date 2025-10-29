@@ -30,9 +30,9 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 if __name__ == "__main__":
-    # SageMaker processing environment
-    input_path = "/opt/ml/processing/input"
-    model_path = "/opt/ml/processing/output"
+    # SageMaker training environment
+    input_path = "/opt/ml/input/data/training"
+    model_path = "/opt/ml/model"
     
     logger.info(f"Looking for CSV files in: {input_path}")
     
@@ -50,15 +50,17 @@ if __name__ == "__main__":
     logger.info(f"Data shape: {data.shape}")
     logger.info(f"Columns: {list(data.columns)}")
     
-    # Handle featured data format (may have numeric column names from preprocessing)
+    # Handle featured data format - price should be the last column
     if 'price' in data.columns:
         X = data.drop(columns=['price'])
         y = data['price']
+        logger.info("Found 'price' column")
     else:
-        # If price is the last column (common after feature engineering)
+        # Feature engineering outputs transformed data with price as last column
         X = data.iloc[:, :-1]
         y = data.iloc[:, -1]
         logger.info("Using last column as target variable")
+        logger.info(f"Target column stats - min: {y.min()}, max: {y.max()}, mean: {y.mean():.2f}")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     logger.info(f"Training set shape: {X_train.shape}")
@@ -75,13 +77,6 @@ if __name__ == "__main__":
     model_file = os.path.join(model_path, "house_price_model.pkl")
     joblib.dump(model, model_file)
     logger.info(f"Model saved to: {model_file}")
-    
-    # Create versioned tar.gz for SageMaker
-    import tarfile
-    tar_file = os.path.join(model_path, "model.tar.gz")
-    with tarfile.open(tar_file, "w:gz") as tar:
-        tar.add(model_file, arcname="house_price_model.pkl")
-    logger.info(f"Model tar.gz created: {tar_file}")
     
     # Log metrics
     y_pred = model.predict(X_test)
@@ -107,19 +102,4 @@ if __name__ == "__main__":
     print(f"Model Version: {model_version}")
     print(f"MAE: {mae:.2f}, R²: {r2:.4f}")
     print(f"Model saved to {model_path}")
-    
-    # Exit successfully
-    sys.exit(0)
-# Test OIDC fix
-# Test cost optimization
-# Test simplified pipeline
-# Test complete pipeline
-# Test fast pipeline
-# Test optimized 3-stage pipeline
-# Test fixed ModelTraining step
-# Test with ml.m5.large for training
-# Test all processing jobs
-# Test current pipeline outputs
-# Test with actual scripts
-# Test CI/CD with S3 scripts
-# Test with S3 permissions fixed
+
