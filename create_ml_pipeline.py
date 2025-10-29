@@ -12,9 +12,12 @@ from sagemaker.processing import ProcessingInput, ProcessingOutput
 from sagemaker.workflow.steps import ProcessingStep, TrainingStep
 from sagemaker.workflow.pipeline import Pipeline
 from sagemaker.sklearn.estimator import SKLearn
+from sagemaker.xgboost.estimator import XGBoost
 from sagemaker.inputs import TrainingInput
 from sagemaker.workflow.parameters import ParameterString, ParameterInteger
 from sagemaker.workflow.pipeline_context import PipelineSession
+from sagemaker.sklearn.processing import SKLearnProcessor
+from sagemaker.processing import ProcessingInput, ProcessingOutput
 import os
 
 def get_pipeline_config():
@@ -75,9 +78,9 @@ def create_ml_pipeline():
         ],
         outputs=[
             ProcessingOutput(
-                output_name="cleaned-data",
+                output_name="processed-data",
                 source="/opt/ml/processing/output",
-                destination=f"s3://{config['bucket']}/data/cleaned"
+                destination=f"s3://{config['bucket']}/data/processed"
             )
         ],
         code="src/data/run_processing.py"
@@ -99,7 +102,7 @@ def create_ml_pipeline():
         inputs=[
             ProcessingInput(
                 source=processing_step.properties.ProcessingOutputConfig.Outputs[
-                    "cleaned-data"
+                    "processed-data"
                 ].S3Output.S3Uri,
                 destination="/opt/ml/processing/input"
             )
@@ -115,21 +118,24 @@ def create_ml_pipeline():
     )
     
     # Step 3: Model Training
-    sklearn_estimator = SKLearn(
+    from sagemaker.xgboost.estimator import XGBoost
+    
+    xgb_estimator = XGBoost(
         entry_point="train_model.py",
         source_dir="src/models",
-        framework_version="1.0-1",
+        framework_version="1.5-1",
         py_version="py3",
         instance_type=training_instance_type,
         instance_count=1,
         role=config['role'],
         base_job_name=f"{config['project_name']}-training",
-        sagemaker_session=pipeline_session
+        sagemaker_session=pipeline_session,
+        environment={'S3_BUCKET': config['bucket']}
     )
     
     training_step = TrainingStep(
         name="ModelTraining",
-        estimator=sklearn_estimator,
+        estimator=xgb_estimator,
         inputs={
             "training": TrainingInput(
                 s3_data=feature_engineering_step.properties.ProcessingOutputConfig.Outputs[
