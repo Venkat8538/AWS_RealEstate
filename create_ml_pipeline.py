@@ -55,7 +55,7 @@ def create_ml_pipeline():
     )
     
     # Step 1: Data Processing
-    processor = SKLearnProcessor(
+    data_processor = SKLearnProcessor(
         framework_version="1.0-1",
         instance_type=processing_instance_type,
         instance_count=1,
@@ -66,7 +66,7 @@ def create_ml_pipeline():
     
     processing_step = ProcessingStep(
         name="DataProcessing",
-        processor=processor,
+        processor=data_processor,
         inputs=[
             ProcessingInput(
                 source=input_data,
@@ -75,15 +75,46 @@ def create_ml_pipeline():
         ],
         outputs=[
             ProcessingOutput(
-                output_name="processed-data",
+                output_name="cleaned-data",
                 source="/opt/ml/processing/output",
-                destination=f"s3://{config['bucket']}/data/processed"
+                destination=f"s3://{config['bucket']}/data/cleaned"
             )
         ],
         code="src/data/run_processing.py"
     )
     
-    # Step 2: Model Training
+    # Step 2: Feature Engineering
+    feature_processor = SKLearnProcessor(
+        framework_version="1.0-1",
+        instance_type=processing_instance_type,
+        instance_count=1,
+        base_job_name=f"{config['project_name']}-feature-engineering",
+        role=config['role'],
+        sagemaker_session=pipeline_session
+    )
+    
+    feature_engineering_step = ProcessingStep(
+        name="FeatureEngineering",
+        processor=feature_processor,
+        inputs=[
+            ProcessingInput(
+                source=processing_step.properties.ProcessingOutputConfig.Outputs[
+                    "cleaned-data"
+                ].S3Output.S3Uri,
+                destination="/opt/ml/processing/input"
+            )
+        ],
+        outputs=[
+            ProcessingOutput(
+                output_name="featured-data",
+                source="/opt/ml/processing/output",
+                destination=f"s3://{config['bucket']}/data/featured"
+            )
+        ],
+        code="src/features/engineer.py"
+    )
+    
+    # Step 3: Model Training
     sklearn_estimator = SKLearn(
         entry_point="train_model.py",
         source_dir="src/models",
@@ -101,8 +132,8 @@ def create_ml_pipeline():
         estimator=sklearn_estimator,
         inputs={
             "training": TrainingInput(
-                s3_data=processing_step.properties.ProcessingOutputConfig.Outputs[
-                    "processed-data"
+                s3_data=feature_engineering_step.properties.ProcessingOutputConfig.Outputs[
+                    "featured-data"
                 ].S3Output.S3Uri,
                 content_type="text/csv"
             )
@@ -119,6 +150,7 @@ def create_ml_pipeline():
         ],
         steps=[
             processing_step,
+            feature_engineering_step,
             training_step
         ],
         sagemaker_session=pipeline_session
@@ -142,7 +174,8 @@ def main():
         print(f"Pipeline ARN: {pipeline.describe()['PipelineArn']}")
         print("\nPipeline includes:")
         print("  1. Data Processing - Cleans and prepares data")
-        print("  2. Model Training - Trains XGBoost model")
+        print("  2. Feature Engineering - Creates and transforms features")
+        print("  3. Model Training - Trains XGBoost model")
         print("\nTo execute the pipeline, run:")
         print(f"  aws sagemaker start-pipeline-execution --pipeline-name {pipeline.name}")
         
