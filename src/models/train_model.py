@@ -50,8 +50,15 @@ if __name__ == "__main__":
     logger.info(f"Data shape: {data.shape}")
     logger.info(f"Columns: {list(data.columns)}")
     
-    X = data.drop(columns=['price'])
-    y = data['price']
+    # Handle featured data format (may have numeric column names from preprocessing)
+    if 'price' in data.columns:
+        X = data.drop(columns=['price'])
+        y = data['price']
+    else:
+        # If price is the last column (common after feature engineering)
+        X = data.iloc[:, :-1]
+        y = data.iloc[:, -1]
+        logger.info("Using last column as target variable")
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
     logger.info(f"Training set shape: {X_train.shape}")
