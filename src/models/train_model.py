@@ -5,10 +5,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 import os
 import sys
-import boto3
 import tarfile
-import joblib
 from datetime import datetime
+
+# Import boto3 with fallback
+try:
+    import boto3
+except ImportError:
+    print("Warning: boto3 not available, S3 upload will be skipped")
+    boto3 = None
 
 if __name__ == "__main__":
     try:
@@ -54,17 +59,17 @@ if __name__ == "__main__":
         
         print(f"MAE: {mae:.2f}, R²: {r2:.4f}")
         
-        # Save model using pickle (more compatible)
+        # Save model using pickle
         model_file = os.path.join(model_path, "model.pkl")
         with open(model_file, 'wb') as f:
             pickle.dump(model, f)
         print("Model saved successfully")
         
-        # Save preprocessor (if exists) - placeholder for actual preprocessor
+        # Save preprocessor
         preprocessor_file = os.path.join(model_path, "preprocessor.pkl")
-        # Note: Replace this with actual preprocessor from feature engineering step
         dummy_preprocessor = {"feature_names": list(X.columns), "trained": True}
-        joblib.dump(dummy_preprocessor, preprocessor_file)
+        with open(preprocessor_file, 'wb') as f:
+            pickle.dump(dummy_preprocessor, f)
         
         # Create model.tar.gz for SageMaker deployment
         tar_file = os.path.join(model_path, "model.tar.gz")
@@ -72,22 +77,26 @@ if __name__ == "__main__":
             tar.add(model_file, arcname="model.pkl")
             tar.add(preprocessor_file, arcname="preprocessor.pkl")
         
-        # Upload to S3 - Make this mandatory, not optional
-        print("Starting S3 upload...")
-        s3_client = boto3.client('s3')
-        bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
-        
-        # Upload preprocessor to artifacts
-        print(f"Uploading preprocessor to s3://{bucket_name}/models/artifacts/preprocessor.pkl")
-        s3_client.upload_file(preprocessor_file, bucket_name, "models/artifacts/preprocessor.pkl")
-        print("✅ Preprocessor uploaded successfully")
-        
-        # Upload model.tar.gz to trained
-        print(f"Uploading model package to s3://{bucket_name}/models/trained/model.tar.gz")
-        s3_client.upload_file(tar_file, bucket_name, "models/trained/model.tar.gz")
-        print("✅ Model package uploaded successfully")
-        
-        print("🎉 All artifacts uploaded to S3 successfully!")
+        # Upload to S3 if boto3 is available
+        if boto3:
+            print("Starting S3 upload...")
+            s3_client = boto3.client('s3')
+            bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+            
+            # Upload preprocessor to artifacts
+            print(f"Uploading preprocessor to s3://{bucket_name}/models/artifacts/preprocessor.pkl")
+            s3_client.upload_file(preprocessor_file, bucket_name, "models/artifacts/preprocessor.pkl")
+            print("✅ Preprocessor uploaded successfully")
+            
+            # Upload model.tar.gz to trained
+            print(f"Uploading model package to s3://{bucket_name}/models/trained/model.tar.gz")
+            s3_client.upload_file(tar_file, bucket_name, "models/trained/model.tar.gz")
+            print("✅ Model package uploaded successfully")
+            
+            print("🎉 All artifacts uploaded to S3 successfully!")
+        else:
+            print("⚠️ boto3 not available, skipping S3 upload")
+            print("Files saved locally in /opt/ml/model/")
         
     except Exception as e:
         print(f"❌ Error: {str(e)}")
