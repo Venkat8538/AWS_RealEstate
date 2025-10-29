@@ -1,16 +1,22 @@
 import pandas as pd
-import joblib
+import pickle
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_absolute_error, r2_score
 import os
 import sys
+import boto3
+import tarfile
+import joblib
+from datetime import datetime
 
 if __name__ == "__main__":
     try:
         # SageMaker training paths
         input_path = "/opt/ml/input/data/training"
         model_path = "/opt/ml/model"
+        
+        print(f"Input path contents: {os.listdir(input_path)}")
         
         # Find CSV file
         csv_files = [f for f in os.listdir(input_path) if f.endswith('.csv')]
@@ -21,16 +27,24 @@ if __name__ == "__main__":
         # Load data
         data = pd.read_csv(os.path.join(input_path, csv_files[0]))
         print(f"Data shape: {data.shape}")
+        print(f"Columns: {list(data.columns)}")
         
         # Split features and target (price is last column)
         X = data.iloc[:, :-1]
         y = data.iloc[:, -1]
         
+        print(f"Features shape: {X.shape}, Target shape: {y.shape}")
+        
         # Train/test split
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         
-        # Train model
-        model = xgb.XGBRegressor(n_estimators=100, random_state=42)
+        # Train model with basic parameters
+        model = xgb.XGBRegressor(
+            n_estimators=100, 
+            max_depth=6,
+            learning_rate=0.1,
+            random_state=42
+        )
         model.fit(X_train, y_train)
         
         # Evaluate
@@ -40,10 +54,43 @@ if __name__ == "__main__":
         
         print(f"MAE: {mae:.2f}, R²: {r2:.4f}")
         
-        # Save model
-        joblib.dump(model, os.path.join(model_path, "model.pkl"))
+        # Save model using pickle (more compatible)
+        model_file = os.path.join(model_path, "model.pkl")
+        with open(model_file, 'wb') as f:
+            pickle.dump(model, f)
         print("Model saved successfully")
         
+        # Save preprocessor (if exists) - placeholder for actual preprocessor
+        preprocessor_file = os.path.join(model_path, "preprocessor.pkl")
+        # Note: Replace this with actual preprocessor from feature engineering step
+        dummy_preprocessor = {"feature_names": list(X.columns), "trained": True}
+        joblib.dump(dummy_preprocessor, preprocessor_file)
+        
+        # Create model.tar.gz for SageMaker deployment
+        tar_file = os.path.join(model_path, "model.tar.gz")
+        with tarfile.open(tar_file, 'w:gz') as tar:
+            tar.add(model_file, arcname="model.pkl")
+            tar.add(preprocessor_file, arcname="preprocessor.pkl")
+        
+        # Upload to S3 - Make this mandatory, not optional
+        print("Starting S3 upload...")
+        s3_client = boto3.client('s3')
+        bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+        
+        # Upload preprocessor to artifacts
+        print(f"Uploading preprocessor to s3://{bucket_name}/models/artifacts/preprocessor.pkl")
+        s3_client.upload_file(preprocessor_file, bucket_name, "models/artifacts/preprocessor.pkl")
+        print("✅ Preprocessor uploaded successfully")
+        
+        # Upload model.tar.gz to trained
+        print(f"Uploading model package to s3://{bucket_name}/models/trained/model.tar.gz")
+        s3_client.upload_file(tar_file, bucket_name, "models/trained/model.tar.gz")
+        print("✅ Model package uploaded successfully")
+        
+        print("🎉 All artifacts uploaded to S3 successfully!")
+        
     except Exception as e:
-        print(f"Error: {str(e)}")
+        print(f"❌ Error: {str(e)}")
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
