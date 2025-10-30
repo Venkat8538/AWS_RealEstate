@@ -152,7 +152,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       {
         Name = "ModelTraining"
         Type = "Training"
-        DependsOn = ["FeatureEngineering"]
+        DependsOn = ["DataProcessing"]
        Arguments = {
   AlgorithmSpecification = {
     TrainingImage     = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
@@ -168,7 +168,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
         S3DataSource = {
           S3DataType = "S3Prefix"
           S3Uri = {
-            Get = "Steps.FeatureEngineering.ProcessingOutputConfig.Outputs['featured-data'].S3Output.S3Uri"
+            Get = "Steps.DataProcessing.ProcessingOutputConfig.Outputs['processed-data'].S3Output.S3Uri"
           }
           S3DataDistributionType = "FullyReplicated"
         }
@@ -193,21 +193,8 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
   Environment       = { S3_BUCKET = var.s3_bucket_name }
 
 HyperParameters = {
-  "entry_point"      = "train_model.py"
-  "source_dir"       = "s3://${var.s3_bucket_name}/scripts"
-
-  # XGBoost params
   "objective"        = "reg:squarederror"
   "num_round"        = "100"
-  "max_depth"        = "5"
-  "eta"              = "0.2"
-  "gamma"            = "4"
-  "min_child_weight" = "6"
-  "subsample"        = "0.8"
-  "verbosity"        = "1"
-
-  # Data
-  "target"           = "Price"   # change if your label is named differently
 }
 
 
