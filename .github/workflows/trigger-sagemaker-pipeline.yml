@@ -23,10 +23,6 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install dependencies
-        run: |
-          pip install -r pipeline_requirements.txt
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
