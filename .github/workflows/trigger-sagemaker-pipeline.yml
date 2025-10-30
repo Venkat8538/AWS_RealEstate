@@ -6,6 +6,7 @@ name: Deploy and Execute SageMaker Pipeline
       - master
     paths:
       - src/**
+  workflow_dispatch:
            
 jobs:
   deploy-and-execute-pipeline:
