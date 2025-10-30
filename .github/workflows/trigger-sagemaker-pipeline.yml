@@ -43,7 +43,7 @@ jobs:
 
       - name: Execute SageMaker Pipeline
         run: |
-          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline-v2
+          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
           echo "✅ SageMaker Pipeline execution started"
 
       - name: Pipeline Summary
@@ -52,5 +52,5 @@ jobs:
           echo "Repository: ${{ github.repository }}"
           echo "Commit: ${{ github.sha }}"
           echo "Branch: ${{ github.ref_name }}"
-          echo "Pipeline: house-price-mlops-pipeline-v2"
+          echo "Pipeline: house-price-mlops-pipeline"
           echo "Status: Deployed and Executed"
