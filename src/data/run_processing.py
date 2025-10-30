@@ -1,5 +1,6 @@
 # src/data/processor.py
 # Updated to trigger pipeline execution
+# Sample echo for workflow trigger
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -95,6 +96,6 @@ if __name__ == "__main__":
         sys.exit(1)
     
     input_file = os.path.join(input_path, input_files[0])
-    output_file = os.path.join(output_path, "cleaned_house_data.csv")
+    output_file = os.path.join(output_path, "processed_house_data.csv")
     
     process_data(input_file, output_file)
