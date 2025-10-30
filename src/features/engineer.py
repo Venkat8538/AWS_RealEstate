@@ -92,11 +92,17 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
     logger.info(f"Saved preprocessor to {preprocessor_file}")
     
     # Save fully preprocessed data
+        # Save fully preprocessed data
     df_transformed = pd.DataFrame(X_transformed)
+
     if y is not None:
-        df_transformed['price'] = y.values
-    df_transformed.to_csv(output_file, index=False)
-    logger.info(f"Saved fully preprocessed data to {output_file}")
+        # Move target (price) to the first column
+        df_transformed.insert(0, 'price', y.values)
+
+    # Ensure all numeric data, no headers, no index
+    df_transformed.to_csv(output_file, index=False, header=False)
+    logger.info(f"Saved fully preprocessed data (no header, target first) to {output_file}")
+
     
     return df_transformed
 
