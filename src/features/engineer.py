@@ -91,21 +91,23 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
     joblib.dump(preprocessor, preprocessor_file)
     logger.info(f"Saved preprocessor to {preprocessor_file}")
     
-    # Save fully preprocessed data
-        # Save fully preprocessed data
-    df_transformed = pd.DataFrame(X_transformed)
-
+    # Save simple CSV for XGBoost
+    # Just use the original featured data without complex preprocessing
     if y is not None:
-        # Add target (price) to the first column (XGBoost expects label_column=0)
-        df_transformed.insert(0, 'price', y.values)
-
-    # 🔧 Ensure data is fully numeric and clean
-    df_transformed = df_transformed.apply(pd.to_numeric, errors='coerce')  # convert all to numeric
-    df_transformed = df_transformed.replace([np.inf, -np.inf], 0).fillna(0)  # replace inf/nan with 0
-
-    # Save clean numeric CSV (no header, no index)
-    df_transformed.to_csv(output_file, index=False, header=False)
-    logger.info(f"Saved clean numeric dataset (no header, target first) to {output_file}")
+        # Create simple dataframe with target first, then features
+        simple_data = df_featured[['price'] + [col for col in df_featured.columns if col != 'price']]
+        # Keep only numeric columns
+        numeric_cols = simple_data.select_dtypes(include=[np.number]).columns
+        simple_data = simple_data[numeric_cols]
+        # Clean data
+        simple_data = simple_data.replace([np.inf, -np.inf], 0).fillna(0)
+        # Save without headers
+        simple_data.to_csv(output_file, index=False, header=False)
+        logger.info(f"Saved simple numeric CSV (target first) to {output_file}")
+        return simple_data
+    else:
+        logger.error("No target variable found")
+        return None
 
 
     
