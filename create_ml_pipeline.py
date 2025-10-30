@@ -83,7 +83,7 @@ def create_ml_pipeline():
                 destination=f"s3://{config['bucket']}/data/processed"
             )
         ],
-        code="src/data/run_processing.py"
+        code=f"s3://{config['bucket']}/code/data/run_processing.py"
     )
     
     # Step 2: Feature Engineering
@@ -114,7 +114,7 @@ def create_ml_pipeline():
                 destination=f"s3://{config['bucket']}/data/featured"
             )
         ],
-        code="src/features/engineer.py"
+        code=f"s3://{config['bucket']}/code/features/engineer.py"
     )
     
     # Step 3: Model Training
@@ -122,7 +122,7 @@ def create_ml_pipeline():
     
     xgb_estimator = XGBoost(
         entry_point="train_model.py",
-        source_dir="src/models",
+        source_dir=f"s3://{config['bucket']}/code/models",
         framework_version="1.5-1",
         py_version="py3",
         instance_type=training_instance_type,
