@@ -96,12 +96,17 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
     df_transformed = pd.DataFrame(X_transformed)
 
     if y is not None:
-        # Move target (price) to the first column
+    # Move target (price) to the first column
         df_transformed.insert(0, 'price', y.values)
 
-    # Ensure all numeric data, no headers, no index
+    # 🔧 Ensure data is fully numeric and clean
+    df_transformed = df_transformed.apply(pd.to_numeric, errors='coerce')  # convert all to numeric
+    df_transformed = df_transformed.replace([np.inf, -np.inf], 0).fillna(0)  # replace inf/nan with 0
+
+    # Save clean numeric CSV (no header, no index)
     df_transformed.to_csv(output_file, index=False, header=False)
-    logger.info(f"Saved fully preprocessed data (no header, target first) to {output_file}")
+    logger.info(f"Saved clean numeric dataset (no header, target first) to {output_file}")
+
 
     
     return df_transformed
