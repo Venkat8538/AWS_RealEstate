@@ -96,8 +96,8 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
     df_transformed = pd.DataFrame(X_transformed)
 
     if y is not None:
-        # Add target (price) to the last column (XGBoost expects target last)
-        df_transformed['price'] = y.values
+        # Add target (price) to the first column (XGBoost expects label_column=0)
+        df_transformed.insert(0, 'price', y.values)
 
     # 🔧 Ensure data is fully numeric and clean
     df_transformed = df_transformed.apply(pd.to_numeric, errors='coerce')  # convert all to numeric
@@ -105,7 +105,7 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
 
     # Save clean numeric CSV (no header, no index)
     df_transformed.to_csv(output_file, index=False, header=False)
-    logger.info(f"Saved clean numeric dataset (no header, target last) to {output_file}")
+    logger.info(f"Saved clean numeric dataset (no header, target first) to {output_file}")
 
 
     
