@@ -39,24 +39,15 @@ jobs:
       - name: Upload ML scripts to S3
         run: |
           aws s3 cp src/data/run_processing.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          aws s3 cp src/features/engineer.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           aws s3 cp src/models/train_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          aws s3 cp src/models/requirements.txt s3://house-price-mlops-dev-itzi2hgi/scripts/
           echo "✅ Scripts uploaded to S3"
 
-      - name: Create/Update SageMaker Pipeline
-        env:
-          S3_BUCKET: house-price-mlops-dev-itzi2hgi
-          SAGEMAKER_ROLE_ARN: arn:aws:iam::482227257362:role/house-price-sagemaker-execution-role
-        run: |
-          python create_ml_pipeline.py
-          echo "✅ SageMaker Pipeline created/updated"
-
       - name: Execute SageMaker Pipeline
-        env:
-          S3_BUCKET: house-price-mlops-dev-itzi2hgi
-          PIPELINE_NAME: house-price-mlops-pipeline
         run: |
-          python execute_pipeline.py --monitor
-          echo "✅ SageMaker Pipeline execution completed"
+          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
+          echo "✅ SageMaker Pipeline execution started"
 
       - name: Pipeline Summary
         run: |
