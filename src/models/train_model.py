@@ -1,105 +1,80 @@
-import pandas as pd
-import pickle
-import xgboost as xgb
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_absolute_error, r2_score
+import argparse
 import os
-import sys
-import tarfile
-from datetime import datetime
+import glob
+import json
+import pandas as pd
+import xgboost as xgb
 
-# Import boto3 with fallback
-try:
-    import boto3
-except ImportError:
-    print("Warning: boto3 not available, S3 upload will be skipped")
-    boto3 = None
+TRAIN_CHANNEL = "/opt/ml/input/data/train"
+MODEL_DIR = "/opt/ml/model"
+
+def parse_args():
+    p = argparse.ArgumentParser()
+
+    # XGBoost hyperparameters (must match what you pass from SageMaker)
+    p.add_argument("--objective", type=str, default="reg:squarederror")
+    p.add_argument("--num_round", type=int, default=100)
+    p.add_argument("--max_depth", type=int, default=5)
+    p.add_argument("--eta", type=float, default=0.2)
+    p.add_argument("--gamma", type=float, default=4.0)
+    p.add_argument("--min_child_weight", type=float, default=6.0)
+    p.add_argument("--subsample", type=float, default=0.8)
+    p.add_argument("--verbosity", type=int, default=1)
+
+    # Data options
+    p.add_argument("--target", type=str, default="Price",
+                   help="Name of the target column in the CSVs")
+    return p.parse_args()
+
+def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
+    csvs = sorted(glob.glob(os.path.join(train_dir, "*.csv")))
+    if not csvs:
+        raise FileNotFoundError(f"No CSV files found under {train_dir}")
+
+    # Concatenate all CSVs; header is OK in script mode
+    dfs = []
+    for path in csvs:
+        df = pd.read_csv(path)
+        if target_col not in df.columns:
+            raise ValueError(f"Target column '{target_col}' not found in {path}. "
+                             f"Columns present: {list(df.columns)}")
+        dfs.append(df)
+    data = pd.concat(dfs, ignore_index=True)
+
+    y = data[target_col]
+    X = data.drop(columns=[target_col])
+
+    # Save feature names for later use
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
+        json.dump(list(X.columns), f)
+
+    dtrain = xgb.DMatrix(X, label=y, feature_names=list(X.columns))
+    return dtrain
+
+def main():
+    args = parse_args()
+    print(">>> Received hyperparameters:", vars(args))
+
+    dtrain = load_train_dataframe(TRAIN_CHANNEL, args.target)
+
+    # Train
+    params = {
+        "objective": args.objective,
+        "max_depth": args.max_depth,
+        "eta": args.eta,
+        "gamma": args.gamma,
+        "min_child_weight": args.min_child_weight,
+        "subsample": args.subsample,
+        "verbosity": args.verbosity,
+    }
+    print(">>> XGBoost params:", params)
+    model = xgb.train(params, dtrain, num_boost_round=args.num_round)
+
+    # Save model — SageMaker will package everything in /opt/ml/model into model.tar.gz
+    os.makedirs(MODEL_DIR, exist_ok=True)
+    model.save_model(os.path.join(MODEL_DIR, "xgboost-model"))
+    print("✅ Saved model to /opt/ml/model/xgboost-model")
 
 if __name__ == "__main__":
-    try:
-        # SageMaker training paths
-        input_path = "/opt/ml/input/data/training"
-        model_path = "/opt/ml/model"
-        
-        print(f"Input path contents: {os.listdir(input_path)}")
-        
-        # Find CSV file
-        csv_files = [f for f in os.listdir(input_path) if f.endswith('.csv')]
-        if not csv_files:
-            print("No CSV files found")
-            sys.exit(1)
-        
-        # Load data
-        data = pd.read_csv(os.path.join(input_path, csv_files[0]))
-        print(f"Data shape: {data.shape}")
-        print(f"Columns: {list(data.columns)}")
-        
-        # Split features and target (price is last column)
-        X = data.iloc[:, :-1]
-        y = data.iloc[:, -1]
-        
-        print(f"Features shape: {X.shape}, Target shape: {y.shape}")
-        
-        # Train/test split
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-        
-        # Train model with basic parameters
-        model = xgb.XGBRegressor(
-            n_estimators=100, 
-            max_depth=6,
-            learning_rate=0.1,
-            random_state=42
-        )
-        model.fit(X_train, y_train)
-        
-        # Evaluate
-        y_pred = model.predict(X_test)
-        mae = mean_absolute_error(y_test, y_pred)
-        r2 = r2_score(y_test, y_pred)
-        
-        print(f"MAE: {mae:.2f}, R²: {r2:.4f}")
-        
-        # Save model using pickle
-        model_file = os.path.join(model_path, "model.pkl")
-        with open(model_file, 'wb') as f:
-            pickle.dump(model, f)
-        print("Model saved successfully")
-        
-        # Save preprocessor
-        preprocessor_file = os.path.join(model_path, "preprocessor.pkl")
-        dummy_preprocessor = {"feature_names": list(X.columns), "trained": True}
-        with open(preprocessor_file, 'wb') as f:
-            pickle.dump(dummy_preprocessor, f)
-        
-        # Create model.tar.gz for SageMaker deployment
-        tar_file = os.path.join(model_path, "model.tar.gz")
-        with tarfile.open(tar_file, 'w:gz') as tar:
-            tar.add(model_file, arcname="model.pkl")
-            tar.add(preprocessor_file, arcname="preprocessor.pkl")
-        
-        # Upload to S3 if boto3 is available
-        if boto3:
-            print("Starting S3 upload...")
-            s3_client = boto3.client('s3')
-            bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
-            
-            # Upload preprocessor to artifacts
-            print(f"Uploading preprocessor to s3://{bucket_name}/models/artifacts/preprocessor.pkl")
-            s3_client.upload_file(preprocessor_file, bucket_name, "models/artifacts/preprocessor.pkl")
-            print("✅ Preprocessor uploaded successfully")
-            
-            # Upload model.tar.gz to trained
-            print(f"Uploading model package to s3://{bucket_name}/models/trained/model.tar.gz")
-            s3_client.upload_file(tar_file, bucket_name, "models/trained/model.tar.gz")
-            print("✅ Model package uploaded successfully")
-            
-            print("🎉 All artifacts uploaded to S3 successfully!")
-        else:
-            print("⚠️ boto3 not available, skipping S3 upload")
-            print("Files saved locally in /opt/ml/model/")
-        
-    except Exception as e:
-        print(f"❌ Error: {str(e)}")
-        import traceback
-        traceback.print_exc()
-        sys.exit(1)
+    main()

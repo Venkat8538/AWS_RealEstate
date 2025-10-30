@@ -52,12 +52,10 @@ resource "aws_s3_object" "folders" {
   for_each = toset([
     "data/raw/",
     "data/processed/",
-    "data/interim/",
+    "data/featured/",
     "models/trained/",
     "models/artifacts/",
-    "models/registry/",
     "pipelines/",
-    "experiments/",
     "logs/",
     "configs/"
   ])

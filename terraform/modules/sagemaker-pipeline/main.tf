@@ -153,49 +153,65 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
         Name = "ModelTraining"
         Type = "Training"
         DependsOn = ["FeatureEngineering"]
-        Arguments = {
-          AlgorithmSpecification = {
-            TrainingImage = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
-            TrainingInputMode = "File"
+       Arguments = {
+  AlgorithmSpecification = {
+    TrainingImage     = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
+    TrainingInputMode = "File"
+  }
+
+  # DO NOT add entry_point or source_dir here
+
+  InputDataConfig = [
+    {
+      ChannelName = "train"
+      DataSource = {
+        S3DataSource = {
+          S3DataType = "S3Prefix"
+          S3Uri = {
+            Get = "Steps.FeatureEngineering.ProcessingOutputConfig.Outputs['featured-data'].S3Output.S3Uri"
           }
-          InputDataConfig = [
-            {
-              ChannelName = "training"
-              DataSource = {
-                S3DataSource = {
-                  S3DataType = "S3Prefix"
-                  S3Uri = {
-                    Get = "Steps.FeatureEngineering.ProcessingOutputConfig.Outputs['featured-data'].S3Output.S3Uri"
-                  }
-                  S3DataDistributionType = "FullyReplicated"
-                }
-              }
-              ContentType = "text/csv"
-              InputMode = "File"
-            }
-          ]
-          OutputDataConfig = {
-            S3OutputPath = "s3://${var.s3_bucket_name}/models/trained"
-          }
-          ResourceConfig = {
-            InstanceType = {
-              Get = "Parameters.TrainingInstanceType"
-            }
-            InstanceCount = 1
-            VolumeSizeInGB = 30
-          }
-          RoleArn = var.sagemaker_role_arn
-          StoppingCondition = {
-            MaxRuntimeInSeconds = 3600
-          }
-          Environment = {
-            S3_BUCKET = var.s3_bucket_name
-          }
-          HyperParameters = {
-            entry_point = "train_model.py"
-            source_dir = "s3://${var.s3_bucket_name}/scripts"
-          }
+          S3DataDistributionType = "FullyReplicated"
         }
+      }
+      ContentType = "text/csv"
+      InputMode   = "File"
+    }
+  ]
+
+  OutputDataConfig = {
+    S3OutputPath = "s3://${var.s3_bucket_name}/models/trained"
+  }
+
+  ResourceConfig = {
+    InstanceType   = { Get = "Parameters.TrainingInstanceType" }
+    InstanceCount  = 1
+    VolumeSizeInGB = 30
+  }
+
+  RoleArn           = var.sagemaker_role_arn
+  StoppingCondition = { MaxRuntimeInSeconds = 3600 }
+  Environment       = { S3_BUCKET = var.s3_bucket_name }
+
+HyperParameters = {
+  "entry_point"      = "train_model.py"
+  "source_dir"       = "s3://${var.s3_bucket_name}/scripts"
+
+  # XGBoost params
+  "objective"        = "reg:squarederror"
+  "num_round"        = "100"
+  "max_depth"        = "5"
+  "eta"              = "0.2"
+  "gamma"            = "4"
+  "min_child_weight" = "6"
+  "subsample"        = "0.8"
+  "verbosity"        = "1"
+
+  # Data
+  "target"           = "Price"   # change if your label is named differently
+}
+
+
+}
       }
     ]
   })

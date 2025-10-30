@@ -13,9 +13,14 @@ output "sagemaker_execution_role_arn" {
   value       = module.sagemaker.sagemaker_execution_role_arn
 }
 
-output "sagemaker_pipeline_info" {
-  description = "Information about SageMaker Pipeline"
-  value       = module.sagemaker_pipeline.pipeline_info
+output "sagemaker_pipeline_arn" {
+  description = "ARN of the SageMaker Pipeline"
+  value       = module.sagemaker_pipeline.pipeline_arn
+}
+
+output "sagemaker_pipeline_name" {
+  description = "Name of the SageMaker Pipeline"
+  value       = module.sagemaker_pipeline.pipeline_name
 }
 
 output "sagemaker_domain_id" {
