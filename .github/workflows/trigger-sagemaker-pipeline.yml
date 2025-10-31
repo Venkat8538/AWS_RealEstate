@@ -35,6 +35,7 @@ jobs:
           aws s3 cp src/data/run_processing.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           aws s3 cp src/features/engineer.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           aws s3 cp src/models/train_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
+          aws s3 cp src/evaluation/evaluate.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           echo "✅ Scripts uploaded to S3"
 
       - name: Execute SageMaker Pipeline
