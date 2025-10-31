@@ -5,7 +5,6 @@ import numpy as np
 import pickle
 import tarfile
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-import xgboost as xgb
 
 def load_model():
     try:
@@ -13,7 +12,7 @@ def load_model():
         model_path = "/opt/ml/processing/input/model"
         print(f"Model directory contents: {os.listdir(model_path)}")
         
-        # Try different model file names
+        # Find and extract tar.gz file
         for file in os.listdir(model_path):
             if file.endswith('.tar.gz'):
                 tar_path = os.path.join(model_path, file)
@@ -24,15 +23,18 @@ def load_model():
         
         print(f"Extracted model contents: {os.listdir('/tmp/model')}")
         
-        # Try loading XGBoost model directly
-        model_file = "/tmp/model/xgboost-model"
-        if os.path.exists(model_file):
-            model = xgb.Booster()
-            model.load_model(model_file)
-            return model
-        else:
-            print(f"Model file not found at {model_file}")
-            return None
+        # Try different model file patterns
+        model_files = ['/tmp/model/model.pkl', '/tmp/model/xgboost-model']
+        
+        for model_file in model_files:
+            if os.path.exists(model_file):
+                print(f"Loading model from {model_file}")
+                with open(model_file, 'rb') as f:
+                    model = pickle.load(f)
+                return model
+        
+        print("No compatible model file found")
+        return None
             
     except Exception as e:
         print(f"Error loading model: {e}")
@@ -67,9 +69,8 @@ def evaluate_model():
         if X_test is None:
             raise Exception("Failed to load test data")
         
-        # Convert to DMatrix for XGBoost
-        dtest = xgb.DMatrix(X_test)
-        y_pred = model.predict(dtest)
+        # Make predictions directly
+        y_pred = model.predict(X_test)
         
         metrics = {
             'rmse': np.sqrt(mean_squared_error(y_test, y_pred)),
