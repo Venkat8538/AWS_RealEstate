@@ -152,7 +152,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       {
         Name = "ModelTraining"
         Type = "Training"
-        DependsOn = ["DataProcessing"]
+        DependsOn = ["FeatureEngineering"]
        Arguments = {
   AlgorithmSpecification = {
     TrainingImage     = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
@@ -199,6 +199,77 @@ HyperParameters = {
 
 
 }
+      },
+      {
+        Name = "ModelEvaluation"
+        Type = "Processing"
+        DependsOn = ["ModelTraining"]
+        Arguments = {
+          ProcessingResources = {
+            ClusterConfig = {
+              InstanceType = {
+                Get = "Parameters.ProcessingInstanceType"
+              }
+              InstanceCount = 1
+              VolumeSizeInGB = 30
+            }
+          }
+          AppSpecification = {
+            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+            ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/evaluate.py"]
+          }
+          RoleArn = var.sagemaker_role_arn
+          ProcessingInputs = [
+            {
+              InputName = "model"
+              AppManaged = false
+              S3Input = {
+                S3Uri = {
+                  Get = "Steps.ModelTraining.ModelArtifacts.S3ModelArtifacts"
+                }
+                LocalPath = "/opt/ml/processing/input/model"
+                S3DataType = "S3Prefix"
+                S3InputMode = "File"
+                S3DataDistributionType = "FullyReplicated"
+              }
+            },
+            {
+              InputName = "test-data"
+              AppManaged = false
+              S3Input = {
+                S3Uri = "s3://${var.s3_bucket_name}/data/test/test.csv"
+                LocalPath = "/opt/ml/processing/input/data"
+                S3DataType = "S3Prefix"
+                S3InputMode = "File"
+                S3DataDistributionType = "FullyReplicated"
+              }
+            },
+            {
+              InputName = "code"
+              AppManaged = false
+              S3Input = {
+                S3Uri = "s3://${var.s3_bucket_name}/scripts/evaluate.py"
+                LocalPath = "/opt/ml/processing/input/code"
+                S3DataType = "S3Prefix"
+                S3InputMode = "File"
+                S3DataDistributionType = "FullyReplicated"
+              }
+            }
+          ]
+          ProcessingOutputConfig = {
+            Outputs = [
+              {
+                OutputName = "evaluation-report"
+                AppManaged = false
+                S3Output = {
+                  S3Uri = "s3://${var.s3_bucket_name}/evaluation/reports"
+                  LocalPath = "/opt/ml/processing/output"
+                  S3UploadMode = "EndOfJob"
+                }
+              }
+            ]
+          }
+        }
       }
     ]
   })

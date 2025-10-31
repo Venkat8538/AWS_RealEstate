@@ -51,6 +51,7 @@ resource "aws_s3_bucket_public_access_block" "mlops_pab" {
 resource "aws_s3_object" "folders" {
   for_each = toset([
     "data/raw/",
+    "data/test/",
     "data/processed/",
     "data/featured/",
     "models/trained/",
