@@ -269,7 +269,8 @@ HyperParameters = {
               }
             ]
           }
-        },
+        }
+      },
         {
           Name = "ModelRegistration"
           Type = "Processing"
