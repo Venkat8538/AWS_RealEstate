@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 import tarfile
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+import xgboost as xgb
 
 def load_model():
     try:
@@ -23,17 +24,15 @@ def load_model():
         
         print(f"Extracted model contents: {os.listdir('/tmp/model')}")
         
-        # Try different model file patterns
-        model_files = ['/tmp/model/model.pkl', '/tmp/model/xgboost-model']
+        # Load XGBoost model
+        model_file = "/tmp/model/xgboost-model"
+        if os.path.exists(model_file):
+            print(f"Loading XGBoost model from {model_file}")
+            model = xgb.Booster()
+            model.load_model(model_file)
+            return model
         
-        for model_file in model_files:
-            if os.path.exists(model_file):
-                print(f"Loading model from {model_file}")
-                with open(model_file, 'rb') as f:
-                    model = pickle.load(f)
-                return model
-        
-        print("No compatible model file found")
+        print("XGBoost model file not found")
         return None
             
     except Exception as e:
@@ -69,8 +68,9 @@ def evaluate_model():
         if X_test is None:
             raise Exception("Failed to load test data")
         
-        # Make predictions directly
-        y_pred = model.predict(X_test)
+        # Convert to DMatrix for XGBoost
+        dtest = xgb.DMatrix(X_test)
+        y_pred = model.predict(dtest)
         
         metrics = {
             'rmse': np.sqrt(mean_squared_error(y_test, y_pred)),

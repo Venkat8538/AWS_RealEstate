@@ -215,7 +215,7 @@ HyperParameters = {
             }
           }
           AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/evaluate.py"]
           }
           RoleArn = var.sagemaker_role_arn
