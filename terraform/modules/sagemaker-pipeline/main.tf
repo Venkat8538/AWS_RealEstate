@@ -269,10 +269,69 @@ HyperParameters = {
               }
             ]
           }
+        },
+        {
+          Name = "ModelRegistration"
+          Type = "Processing"
+          DependsOn = ["ModelEvaluation"]
+          Arguments = {
+            ProcessingResources = {
+              ClusterConfig = {
+                InstanceType = {
+                  Get = "Parameters.ProcessingInstanceType"
+                }
+                InstanceCount = 1
+                VolumeSizeInGB = 30
+              }
+            }
+            AppSpecification = {
+              ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+              ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/register_model.py"]
+            }
+            RoleArn = var.sagemaker_role_arn
+            ProcessingInputs = [
+              {
+                InputName = "evaluation-report"
+                AppManaged = false
+                S3Input = {
+                  S3Uri = {
+                    Get = "Steps.ModelEvaluation.ProcessingOutputConfig.Outputs['evaluation-report'].S3Output.S3Uri"
+                  }
+                  LocalPath = "/opt/ml/processing/input/evaluation"
+                  S3DataType = "S3Prefix"
+                  S3InputMode = "File"
+                  S3DataDistributionType = "FullyReplicated"
+                }
+              },
+              {
+                InputName = "code"
+                AppManaged = false
+                S3Input = {
+                  S3Uri = "s3://${var.s3_bucket_name}/scripts/register_model.py"
+                  LocalPath = "/opt/ml/processing/input/code"
+                  S3DataType = "S3Prefix"
+                  S3InputMode = "File"
+                  S3DataDistributionType = "FullyReplicated"
+                }
+              }
+            ]
+            ProcessingOutputConfig = {
+              Outputs = [
+                {
+                  OutputName = "registration-metadata"
+                  AppManaged = false
+                  S3Output = {
+                    S3Uri = "s3://${var.s3_bucket_name}/models/registry"
+                    LocalPath = "/opt/ml/processing/output"
+                    S3UploadMode = "EndOfJob"
+                  }
+                }
+              ]
+            }
+          }
         }
-      }
-    ]
-  })
+      ]
+    })
 
   tags = {
     Name        = local.pipeline_name
