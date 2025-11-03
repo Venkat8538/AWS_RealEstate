@@ -29,10 +29,18 @@ def setup_mlflow():
     try:
         mlflow.set_tracking_uri("http://mlflow-service:5000")
         mlflow.set_experiment("house-price-prediction")
-        print("MLflow connected successfully")
+        
+        # Test MLflow logging
+        with mlflow.start_run(run_name="setup_test"):
+            mlflow.log_param("setup_status", "success")
+            mlflow.log_metric("setup_time", 1.0)
+        
+        print("MLflow connected and logged successfully")
         return "MLflow setup complete"
     except Exception as e:
         print(f"MLflow setup failed: {e}")
+        import traceback
+        print(f"Full error: {traceback.format_exc()}")
         return "MLflow setup failed - continuing without tracking"
 
 def trigger_sagemaker_pipeline(**context):
