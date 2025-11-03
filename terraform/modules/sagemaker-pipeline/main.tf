@@ -289,6 +289,9 @@ HyperParameters = {
               ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
               ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/register_model.py"]
             }
+            Environment = {
+              AWS_DEFAULT_REGION = "us-east-1"
+            }
             RoleArn = var.sagemaker_role_arn
             ProcessingInputs = [
               {

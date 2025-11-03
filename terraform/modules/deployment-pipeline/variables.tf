@@ -1,13 +1,6 @@
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "us-east-1"
-}
-
 variable "project_name" {
   description = "Project name for resource naming"
   type        = string
-  default     = "house-price"
 }
 
 variable "environment" {
@@ -16,10 +9,24 @@ variable "environment" {
   default     = "dev"
 }
 
+variable "s3_bucket_name" {
+  description = "Name of the MLOps S3 bucket"
+  type        = string
+}
+
+variable "s3_bucket_arn" {
+  description = "ARN of the MLOps S3 bucket"
+  type        = string
+}
+
+variable "sagemaker_role_arn" {
+  description = "ARN of the SageMaker execution role"
+  type        = string
+}
+
 variable "github_repository" {
   description = "GitHub repository in format 'owner/repo'"
   type        = string
-  default     = "Venkat8538/AWS_RealEstate"
 }
 
 variable "github_token" {

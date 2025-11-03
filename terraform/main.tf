@@ -62,3 +62,16 @@ module "github_oidc" {
   s3_bucket_name      = module.s3.bucket_name
   sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
 }
+
+# Deployment Pipeline Module
+module "deployment_pipeline" {
+  source = "./modules/deployment-pipeline"
+  
+  project_name        = var.project_name
+  environment         = var.environment
+  s3_bucket_name      = module.s3.bucket_name
+  s3_bucket_arn       = module.s3.bucket_arn
+  sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
+  github_repository   = var.github_repository
+  github_token        = var.github_token
+}

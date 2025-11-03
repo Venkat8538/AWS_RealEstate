@@ -17,14 +17,13 @@ resource "random_string" "bucket_suffix" {
   upper   = false
 }
 
-# Bucket versioning - DISABLED for cost savings
-# Enable only for production environments
-# resource "aws_s3_bucket_versioning" "mlops_versioning" {
-#   bucket = aws_s3_bucket.mlops_bucket.id
-#   versioning_configuration {
-#     status = "Enabled"
-#   }
-# }
+# Bucket versioning - Required for CodePipeline
+resource "aws_s3_bucket_versioning" "mlops_versioning" {
+  bucket = aws_s3_bucket.mlops_bucket.id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
 
 # Bucket encryption - Use SSE-S3 (free) instead of KMS
 resource "aws_s3_bucket_server_side_encryption_configuration" "mlops_encryption" {

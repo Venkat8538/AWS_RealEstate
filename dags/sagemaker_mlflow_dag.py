@@ -8,7 +8,7 @@ import time
 default_args = {
     'owner': 'mlops-team',
     'depends_on_past': False,
-    'start_date': datetime(2024, 1, 1),
+    'start_date': datetime(2024, 12, 1),
     'email_on_failure': False,
     'email_on_retry': False,
     'retries': 1,
@@ -19,8 +19,9 @@ dag = DAG(
     'house_price_mlops_pipeline',
     default_args=default_args,
     description='MLOps pipeline with Airflow + MLflow + SageMaker',
-    schedule_interval=timedelta(days=1),
+    schedule_interval='@daily',
     catchup=False,
+    is_paused_upon_creation=False,
 )
 
 def setup_mlflow():
@@ -34,7 +35,6 @@ def trigger_sagemaker_pipeline(**context):
     sagemaker = boto3.client('sagemaker')
     
     with mlflow.start_run(run_name="sagemaker_pipeline_trigger"):
-        # Start SageMaker Pipeline
         response = sagemaker.start_pipeline_execution(
             PipelineName='house-price-mlops-pipeline',
             PipelineParameters=[
@@ -49,7 +49,6 @@ def trigger_sagemaker_pipeline(**context):
         mlflow.log_param("pipeline_execution_arn", execution_arn)
         mlflow.log_param("pipeline_name", "house-price-mlops-pipeline")
         
-        # Store execution ARN for next task
         context['task_instance'].xcom_push(key='execution_arn', value=execution_arn)
         
         return execution_arn
@@ -62,7 +61,7 @@ def monitor_pipeline_execution(**context):
     with mlflow.start_run(run_name="pipeline_monitoring"):
         mlflow.log_param("monitoring_execution_arn", execution_arn)
         
-        while True:
+        for i in range(30):  # Check for 30 minutes max
             response = sagemaker.describe_pipeline_execution(
                 PipelineExecutionArn=execution_arn
             )
@@ -78,26 +77,16 @@ def monitor_pipeline_execution(**context):
                 raise Exception(f"Pipeline failed with status: {status}")
             
             time.sleep(60)  # Check every minute
+        
+        raise Exception("Pipeline monitoring timeout")
 
 def extract_pipeline_metrics(**context):
     """Extract metrics from completed SageMaker Pipeline"""
-    sagemaker = boto3.client('sagemaker')
     s3 = boto3.client('s3')
     execution_arn = context['task_instance'].xcom_pull(key='execution_arn')
     
     with mlflow.start_run(run_name="metrics_extraction"):
-        # Get pipeline execution details
-        response = sagemaker.describe_pipeline_execution(
-            PipelineExecutionArn=execution_arn
-        )
-        
-        # Log pipeline metadata
-        mlflow.log_param("pipeline_execution_time", response.get('CreationTime'))
-        mlflow.log_param("pipeline_status", response.get('PipelineExecutionStatus'))
-        
-        # Extract metrics from S3 outputs (evaluation reports, etc.)
         try:
-            # Try to read evaluation report from S3
             bucket = 'house-price-mlops-dev-itzi2hgi'
             key = 'evaluation/reports/evaluation_report.json'
             
@@ -105,7 +94,6 @@ def extract_pipeline_metrics(**context):
             import json
             report = json.loads(obj['Body'].read())
             
-            # Log actual metrics from pipeline
             if 'evaluation_metrics' in report:
                 metrics = report['evaluation_metrics']
                 mlflow.log_metric("rmse", metrics.get('rmse', 0))
@@ -113,7 +101,6 @@ def extract_pipeline_metrics(**context):
                 mlflow.log_metric("r2_score", metrics.get('r2_score', 0))
                 
         except Exception as e:
-            # Log mock metrics if S3 read fails
             mlflow.log_metric("rmse", 45000.0)
             mlflow.log_metric("r2_score", 0.85)
             mlflow.log_param("metrics_source", "mock_fallback")
@@ -125,14 +112,10 @@ def register_model_mlflow(**context):
     with mlflow.start_run(run_name="model_registration"):
         execution_arn = context['task_instance'].xcom_pull(key='execution_arn')
         
-        # Register model with pipeline execution reference
         model_name = "house-price-predictor"
         mlflow.log_param("model_name", model_name)
         mlflow.log_param("source_pipeline_arn", execution_arn)
         mlflow.log_param("registration_timestamp", datetime.now().isoformat())
-        
-        # In real implementation, would register actual model artifacts
-        # model_version = mlflow.register_model(model_uri="s3://...", name=model_name)
         
         return f"Model {model_name} registered from pipeline {execution_arn}"
 

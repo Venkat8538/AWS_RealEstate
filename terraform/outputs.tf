@@ -43,3 +43,13 @@ output "github_actions_role_arn" {
   description = "ARN of the GitHub Actions IAM role"
   value       = module.github_oidc.github_actions_role_arn
 }
+
+output "deployment_pipeline_arn" {
+  description = "ARN of the deployment CodePipeline"
+  value       = module.deployment_pipeline.codepipeline_arn
+}
+
+output "deployment_codebuild_arn" {
+  description = "ARN of the deployment CodeBuild project"
+  value       = module.deployment_pipeline.codebuild_project_arn
+}
