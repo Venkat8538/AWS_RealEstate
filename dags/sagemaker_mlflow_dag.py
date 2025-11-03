@@ -26,15 +26,32 @@ dag = DAG(
 
 def setup_mlflow():
     """Setup MLflow tracking"""
-    mlflow.set_tracking_uri("http://mlflow-service:5000")
-    mlflow.set_experiment("house-price-prediction")
-    return "MLflow setup complete"
+    try:
+        mlflow.set_tracking_uri("http://mlflow-service:5000")
+        mlflow.set_experiment("house-price-prediction")
+        print("MLflow connected successfully")
+        return "MLflow setup complete"
+    except Exception as e:
+        print(f"MLflow setup failed: {e}")
+        return "MLflow setup failed - continuing without tracking"
 
 def trigger_sagemaker_pipeline(**context):
     """Trigger SageMaker Pipeline execution"""
     try:
+        import os
+        print("Checking AWS credentials...")
+        print(f"AWS_ACCESS_KEY_ID: {'SET' if os.getenv('AWS_ACCESS_KEY_ID') else 'NOT SET'}")
+        print(f"AWS_SECRET_ACCESS_KEY: {'SET' if os.getenv('AWS_SECRET_ACCESS_KEY') else 'NOT SET'}")
+        print(f"AWS_DEFAULT_REGION: {os.getenv('AWS_DEFAULT_REGION', 'NOT SET')}")
+        
         print("Initializing SageMaker client...")
         sagemaker = boto3.client('sagemaker', region_name='us-east-1')
+        
+        # Test credentials with a simple call
+        print("Testing AWS credentials...")
+        sts = boto3.client('sts', region_name='us-east-1')
+        identity = sts.get_caller_identity()
+        print(f"AWS Identity: {identity.get('Arn', 'Unknown')}")
         
         # Check if pipeline exists
         print("Checking if pipeline exists...")
@@ -68,8 +85,7 @@ def trigger_sagemaker_pipeline(**context):
     except Exception as e:
         print(f"SageMaker pipeline trigger failed: {str(e)}")
         print(f"Error type: {type(e).__name__}")
-        import traceback
-        print(f"Full traceback: {traceback.format_exc()}")
+
         
         # Mock execution for demo
         mock_arn = "arn:aws:sagemaker:us-east-1:123456789012:pipeline-execution/house-price-mlops-pipeline/mock-execution"
