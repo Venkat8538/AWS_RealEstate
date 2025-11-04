@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import sys
 
-print("MLflow training script loaded - testing workflow")
+print("MLflow training script loaded - testing workflow with setup.py")
 
 # Simple MLflow setup without external dependencies
 def setup_mlflow_tracking(tracking_uri=None, experiment_name="house-price-prediction"):
