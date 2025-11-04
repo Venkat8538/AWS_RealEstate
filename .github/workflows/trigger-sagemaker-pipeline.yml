@@ -39,10 +39,10 @@ jobs:
           aws s3 cp src/models/register_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
           echo "✅ Scripts uploaded to S3"
 
-      - name: Execute SageMaker Pipeline
-        run: |
-          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
-          echo "✅ SageMaker Pipeline execution started"
+      # - name: Execute SageMaker Pipeline
+      #   run: |
+      #     aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
+      #     echo "✅ SageMaker Pipeline execution started"
 
       - name: Pipeline Summary
         run: |
