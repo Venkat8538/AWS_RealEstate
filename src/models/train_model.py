@@ -10,6 +10,8 @@ from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import sys
 
+print("MLflow training script loaded - testing workflow")
+
 # Simple MLflow setup without external dependencies
 def setup_mlflow_tracking(tracking_uri=None, experiment_name="house-price-prediction"):
     try:
@@ -80,6 +82,7 @@ def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
 
 def main():
     args = parse_args()
+    print(">>> MLflow-enabled training starting...")
     print(">>> Received hyperparameters:", vars(args))
 
     # Setup MLflow tracking
