@@ -19,6 +19,8 @@ seaborn>=0.13.0        # High-level interface for drawing attractive and informa
 # 📦 EXPERIMENT TRACKING & MODEL MANAGEMENT
 # ---------------------------------------------
 mlflow>=2.8.0          # End-to-end ML lifecycle tracking, including experiment tracking, model packaging, and deployment
+boto3>=1.34.0          # AWS SDK for Python - required for SageMaker and S3 integration
+sagemaker>=2.190.0     # AWS SageMaker Python SDK for ML pipeline orchestration
 
 # ---------------------------------------------
 # ✅ TESTING
@@ -31,6 +33,11 @@ pytest==7.3.1          # Python testing framework — great for writing unit tes
 fastapi>=0.104.0       # Lightweight, high-performance web framework for serving ML models via REST APIs
 uvicorn>=0.24.0        # ASGI server for running FastAPI apps — lightweight and fast
 #
+# ---------------------------------------------
+# 🔄 WORKFLOW ORCHESTRATION
+# ---------------------------------------------
+apache-airflow>=2.7.0  # Workflow orchestration platform for ML pipelines
+
 # ---------------------------------------------
 #  MISC
 # ---------------------------------------------

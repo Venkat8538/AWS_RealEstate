@@ -1,11 +1,21 @@
 import os
 import json
 import boto3
+import mlflow
 from datetime import datetime
 
 def register_model():
     try:
         print("Model Registration Started")
+        
+        # Setup MLflow tracking
+        try:
+            mlflow_uri = os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-service:5000')
+            mlflow.set_tracking_uri(mlflow_uri)
+            mlflow.set_experiment("house-price-prediction")
+            print(f"MLflow tracking URI: {mlflow_uri}")
+        except Exception as e:
+            print(f"MLflow setup failed: {e}")
         
         # Load evaluation report
         report_file = "/opt/ml/processing/input/evaluation/evaluation_report.json"
@@ -58,6 +68,19 @@ def register_model():
                 model_package_arn = response['ModelPackageArn']
                 print(f"Model registered successfully: {model_package_arn}")
                 
+                # Log to MLflow
+                try:
+                    with mlflow.start_run(run_name="model_registration"):
+                        mlflow.log_param("model_package_arn", model_package_arn)
+                        mlflow.log_param("model_status", "REGISTERED")
+                        mlflow.log_param("approval_status", "PendingManualApproval")
+                        mlflow.log_metric("eval_rmse", report['evaluation_metrics']['rmse'])
+                        mlflow.log_metric("eval_r2", report['evaluation_metrics']['r2_score'])
+                        mlflow.log_param("registration_timestamp", datetime.utcnow().isoformat())
+                        print("Model registration logged to MLflow")
+                except Exception as e:
+                    print(f"MLflow logging failed: {e}")
+                
                 registration_data = {
                     "model_status": "REGISTERED",
                     "model_package_arn": model_package_arn,
@@ -69,6 +92,18 @@ def register_model():
                 
             except Exception as e:
                 print(f"Failed to register model: {e}")
+                
+                # Log failure to MLflow
+                try:
+                    with mlflow.start_run(run_name="model_registration_failed"):
+                        mlflow.log_param("model_status", "REGISTRATION_FAILED")
+                        mlflow.log_param("error", str(e))
+                        mlflow.log_metric("eval_rmse", report['evaluation_metrics']['rmse'])
+                        mlflow.log_metric("eval_r2", report['evaluation_metrics']['r2_score'])
+                        mlflow.log_param("registration_timestamp", datetime.utcnow().isoformat())
+                except Exception as mlflow_e:
+                    print(f"MLflow logging failed: {mlflow_e}")
+                
                 registration_data = {
                     "model_status": "REGISTRATION_FAILED",
                     "error": str(e),
@@ -89,6 +124,17 @@ def register_model():
         else:
             print("Model failed evaluation - skipping registration")
             
+            # Log rejection to MLflow
+            try:
+                with mlflow.start_run(run_name="model_rejected"):
+                    mlflow.log_param("model_status", "REJECTED")
+                    mlflow.log_param("rejection_reason", "Model failed evaluation criteria")
+                    mlflow.log_metric("eval_rmse", report['evaluation_metrics']['rmse'])
+                    mlflow.log_metric("eval_r2", report['evaluation_metrics']['r2_score'])
+                    mlflow.log_param("registration_timestamp", datetime.utcnow().isoformat())
+            except Exception as e:
+                print(f"MLflow logging failed: {e}")
+            
             registration_data = {
                 "model_status": "REJECTED",
                 "registration_time": datetime.utcnow().isoformat(),
@@ -105,6 +151,16 @@ def register_model():
         
     except Exception as e:
         print(f"Registration failed: {e}")
+        
+        # Log critical failure to MLflow
+        try:
+            with mlflow.start_run(run_name="registration_critical_failure"):
+                mlflow.log_param("model_status", "CRITICAL_FAILURE")
+                mlflow.log_param("error", str(e))
+                mlflow.log_param("timestamp", datetime.utcnow().isoformat())
+        except Exception as mlflow_e:
+            print(f"MLflow logging failed: {mlflow_e}")
+        
         raise
 
 if __name__ == "__main__":

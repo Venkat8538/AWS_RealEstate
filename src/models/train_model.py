@@ -4,6 +4,22 @@ import glob
 import json
 import pandas as pd
 import xgboost as xgb
+import mlflow
+import mlflow.xgboost
+from sklearn.metrics import mean_squared_error, r2_score
+import numpy as np
+import sys
+
+# Add src directory to path for imports
+sys.path.append('/opt/ml/code/src')
+try:
+    from mlflow_config import setup_mlflow_tracking, log_sagemaker_job_info
+except ImportError:
+    print("MLflow config not available, using basic setup")
+    def setup_mlflow_tracking(**kwargs):
+        return False
+    def log_sagemaker_job_info(**kwargs):
+        pass
 
 TRAIN_CHANNEL = "/opt/ml/input/data/train"
 MODEL_DIR = "/opt/ml/model"
@@ -24,6 +40,9 @@ def parse_args():
     # Data options
     p.add_argument("--target", type=str, default="Price",
                    help="Name of the target column in the CSVs")
+    p.add_argument("--mlflow_tracking_uri", type=str, 
+                   default=os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-service:5000'),
+                   help="MLflow tracking server URI")
     return p.parse_args()
 
 def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
@@ -48,6 +67,11 @@ def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
     os.makedirs(MODEL_DIR, exist_ok=True)
     with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
         json.dump(list(X.columns), f)
+    
+    print(f"Training data shape: {X.shape}")
+    print(f"Target column: {target_col}")
+    print(f"Number of features: {len(X.columns)}")
+    print(f"Sample features: {list(X.columns)[:5]}{'...' if len(X.columns) > 5 else ''}")
 
     dtrain = xgb.DMatrix(X, label=y, feature_names=list(X.columns))
     return dtrain
@@ -56,9 +80,23 @@ def main():
     args = parse_args()
     print(">>> Received hyperparameters:", vars(args))
 
+    # Setup MLflow tracking
+    mlflow_enabled = setup_mlflow_tracking(
+        tracking_uri=args.mlflow_tracking_uri,
+        experiment_name="house-price-prediction"
+    )
+    
+    if mlflow_enabled:
+        print("MLflow tracking enabled")
+        # Log SageMaker job info
+        job_name = os.environ.get('TRAINING_JOB_NAME', 'unknown-training-job')
+        log_sagemaker_job_info(job_name, 'training')
+    else:
+        print("MLflow tracking disabled - continuing without tracking")
+
     dtrain = load_train_dataframe(TRAIN_CHANNEL, args.target)
 
-    # Train
+    # Train with MLflow tracking
     params = {
         "objective": args.objective,
         "max_depth": args.max_depth,
@@ -69,7 +107,43 @@ def main():
         "verbosity": args.verbosity,
     }
     print(">>> XGBoost params:", params)
+    
+    # Train model
     model = xgb.train(params, dtrain, num_boost_round=args.num_round)
+    
+    # Calculate training metrics
+    train_pred = model.predict(dtrain)
+    train_labels = dtrain.get_label()
+    train_rmse = np.sqrt(mean_squared_error(train_labels, train_pred))
+    train_r2 = r2_score(train_labels, train_pred)
+    
+    print(f"Training RMSE: {train_rmse:.2f}")
+    print(f"Training R²: {train_r2:.4f}")
+    
+    # Log to MLflow if enabled
+    if mlflow_enabled:
+        try:
+            with mlflow.start_run(run_name="sagemaker_training"):
+                # Log hyperparameters
+                mlflow.log_params(params)
+                mlflow.log_param("num_round", args.num_round)
+                mlflow.log_param("target_column", args.target)
+                mlflow.log_param("training_data_shape", str(dtrain.num_row()))
+                
+                # Log metrics
+                mlflow.log_metric("train_rmse", train_rmse)
+                mlflow.log_metric("train_r2", train_r2)
+                mlflow.log_metric("num_features", dtrain.num_col())
+                
+                # Log model
+                mlflow.xgboost.log_model(model, "model")
+                
+                print("Model and metrics logged to MLflow")
+                
+        except Exception as e:
+            print(f"MLflow logging failed: {e}")
+    else:
+        print("MLflow not available - metrics not logged")
 
     # Save model — SageMaker will package everything in /opt/ml/model into model.tar.gz
     os.makedirs(MODEL_DIR, exist_ok=True)

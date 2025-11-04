@@ -47,6 +47,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/run_processing.py"]
           }
+          Environment = {
+            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+          }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
             {
@@ -106,6 +109,9 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/engineer.py"]
+          }
+          Environment = {
+            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
           }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
@@ -175,6 +181,17 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       }
       ContentType = "text/csv"
       InputMode   = "File"
+    },
+    {
+      ChannelName = "code"
+      DataSource = {
+        S3DataSource = {
+          S3DataType = "S3Prefix"
+          S3Uri = "s3://${var.s3_bucket_name}/scripts/"
+          S3DataDistributionType = "FullyReplicated"
+        }
+      }
+      InputMode = "File"
     }
   ]
 
@@ -190,7 +207,10 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
 
   RoleArn           = var.sagemaker_role_arn
   StoppingCondition = { MaxRuntimeInSeconds = 3600 }
-  Environment       = { S3_BUCKET = var.s3_bucket_name }
+  Environment = {
+    S3_BUCKET = var.s3_bucket_name
+    MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+  }
 
 HyperParameters = {
   "objective"        = "reg:squarederror"
@@ -217,6 +237,9 @@ HyperParameters = {
           AppSpecification = {
             ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/evaluate.py"]
+          }
+          Environment = {
+            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
           }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
@@ -291,6 +314,7 @@ HyperParameters = {
             }
             Environment = {
               AWS_DEFAULT_REGION = "us-east-1"
+              MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
             }
             RoleArn = var.sagemaker_role_arn
             ProcessingInputs = [
