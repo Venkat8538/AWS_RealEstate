@@ -185,7 +185,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       DataSource = {
         S3DataSource = {
           S3DataType = "S3Prefix"
-          S3Uri = "s3://${var.s3_bucket_name}/scripts/train_model.py"
+          S3Uri = "s3://${var.s3_bucket_name}/scripts/"
           S3DataDistributionType = "FullyReplicated"
         }
       }
