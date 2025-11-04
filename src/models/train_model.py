@@ -10,16 +10,18 @@ from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import sys
 
-# Add src directory to path for imports
-sys.path.append('/opt/ml/code/src')
-try:
-    from mlflow_config import setup_mlflow_tracking, log_sagemaker_job_info
-except ImportError:
-    print("MLflow config not available, using basic setup")
-    def setup_mlflow_tracking(**kwargs):
+# Simple MLflow setup without external dependencies
+def setup_mlflow_tracking(tracking_uri=None, experiment_name="house-price-prediction"):
+    try:
+        uri = tracking_uri or os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-service:5000')
+        mlflow.set_tracking_uri(uri)
+        mlflow.set_experiment(experiment_name)
+        return True
+    except:
         return False
-    def log_sagemaker_job_info(**kwargs):
-        pass
+
+def log_sagemaker_job_info(job_name, job_type):
+    pass  # Simplified for SageMaker
 
 TRAIN_CHANNEL = "/opt/ml/input/data/train"
 MODEL_DIR = "/opt/ml/model"

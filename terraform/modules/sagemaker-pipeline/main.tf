@@ -165,8 +165,6 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
     TrainingInputMode = "File"
   }
 
-  # DO NOT add entry_point or source_dir here
-
   InputDataConfig = [
     {
       ChannelName = "train"
@@ -187,7 +185,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       DataSource = {
         S3DataSource = {
           S3DataType = "S3Prefix"
-          S3Uri = "s3://${var.s3_bucket_name}/scripts/"
+          S3Uri = "s3://${var.s3_bucket_name}/scripts/train_model.py"
           S3DataDistributionType = "FullyReplicated"
         }
       }
@@ -208,6 +206,7 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
   RoleArn           = var.sagemaker_role_arn
   StoppingCondition = { MaxRuntimeInSeconds = 3600 }
   Environment = {
+    SAGEMAKER_PROGRAM = "/opt/ml/input/data/code/train_model.py"
     S3_BUCKET = var.s3_bucket_name
     MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
   }
