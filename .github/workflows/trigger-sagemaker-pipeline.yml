@@ -30,23 +30,35 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
-      - name: Upload ML scripts to S3
+      - name: Create and upload scripts tarball
         run: |
-          aws s3 cp src/data/run_processing.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/features/engineer.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/train_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/__init__.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/__main__.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/setup.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/requirements.txt s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/evaluation/evaluate.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          aws s3 cp src/models/register_model.py s3://house-price-mlops-dev-itzi2hgi/scripts/
-          echo "✅ Scripts uploaded to S3"
+          # Create scripts directory and copy files
+          mkdir -p scripts_temp
+          cp src/data/run_processing.py scripts_temp/
+          cp src/features/engineer.py scripts_temp/
+          cp src/models/train_model.py scripts_temp/
+          cp src/models/__init__.py scripts_temp/
+          cp src/models/__main__.py scripts_temp/
+          cp src/models/setup.py scripts_temp/
+          cp src/models/requirements.txt scripts_temp/
+          cp src/evaluation/evaluate.py scripts_temp/
+          cp src/models/register_model.py scripts_temp/
+          
+          # Create tarball
+          tar -czf scripts.tar.gz -C scripts_temp .
+          
+          # Upload individual scripts and tarball
+          aws s3 cp scripts_temp/ s3://house-price-mlops-dev-itzi2hgi/scripts/ --recursive
+          aws s3 cp scripts.tar.gz s3://house-price-mlops-dev-itzi2hgi/scripts/
+          
+          # Cleanup
+          rm -rf scripts_temp scripts.tar.gz
+          echo "✅ Scripts and tarball uploaded to S3"
 
-      # - name: Execute SageMaker Pipeline
-      #   run: |
-      #     aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
-      #     echo "✅ SageMaker Pipeline execution started"
+      - name: Execute SageMaker Pipeline
+        run: |
+          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
+          echo "✅ SageMaker Pipeline execution started"
 
       - name: Pipeline Summary
         run: |
