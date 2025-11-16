@@ -42,7 +42,7 @@ def parse_args():
     p.add_argument("--verbosity", type=int, default=1)
 
     # Data options
-    p.add_argument("--target", type=str, default="Price",
+    p.add_argument("--target", type=str, default="price",
                    help="Name of the target column in the CSVs")
     p.add_argument("--mlflow_tracking_uri", type=str, 
                    default=os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-service:5000'),
