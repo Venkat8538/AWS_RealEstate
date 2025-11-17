@@ -54,11 +54,6 @@ jobs:
           rm -rf scripts_temp scripts.tar.gz
           echo "✅ Scripts and tarball uploaded to S3"
 
-      - name: Execute SageMaker Pipeline
-        run: |
-          aws sagemaker start-pipeline-execution --pipeline-name house-price-mlops-pipeline
-          echo "✅ SageMaker Pipeline execution started"
-
       - name: Pipeline Summary
         run: |
           echo "🎉 ML Pipeline Deployment Summary:"
