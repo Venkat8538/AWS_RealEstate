@@ -3,9 +3,23 @@ import os
 import glob
 import json
 import pandas as pd
-import xgboost as xgb
-import mlflow
-import mlflow.xgboost
+
+# Try importing XGBoost normally (SageMaker will have it)
+try:
+    import xgboost as xgb
+    XGBOOST_AVAILABLE = True
+except ImportError:
+    print("⚠ XGBoost is not available in this environment. Training will be skipped.")
+    XGBOOST_AVAILABLE = False
+
+# Try importing MLflow (SageMaker Studio will have it)
+try:
+    import mlflow
+    import mlflow.xgboost
+except ImportError:
+    print("⚠️ MLflow not available in local Docker — using dummy mode.")
+    mlflow = None
+
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import sys
@@ -14,6 +28,8 @@ print("MLflow training script loaded - clean build without requirements.txt")
 
 # Simple MLflow setup without external dependencies
 def setup_mlflow_tracking(tracking_uri=None, experiment_name="house-price-prediction"):
+    if mlflow is None:
+        return False
     try:
         uri = tracking_uri or os.environ.get('MLFLOW_TRACKING_URI', 'http://mlflow-service:5000')
         mlflow.set_tracking_uri(uri)
@@ -49,7 +65,7 @@ def parse_args():
                    help="MLflow tracking server URI")
     return p.parse_args()
 
-def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
+def load_train_dataframe(train_dir: str, target_col: str):
     csvs = sorted(glob.glob(os.path.join(train_dir, "*.csv")))
     if not csvs:
         raise FileNotFoundError(f"No CSV files found under {train_dir}")
@@ -81,11 +97,14 @@ def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
     print(f"Number of features: {len(X.columns)}")
     print(f"Sample features: {list(X.columns)[:5]}{'...' if len(X.columns) > 5 else ''}")
 
+    if not XGBOOST_AVAILABLE:
+        return None
+        
     dtrain = xgb.DMatrix(
-    X,
-    label=y,
-    feature_names=list(X.columns),
-    enable_categorical=True,   # ← this is the missing piece
+        X,
+        label=y,
+        feature_names=list(X.columns),
+        enable_categorical=True,
     )
     return dtrain
 
@@ -93,6 +112,10 @@ def main():
     args = parse_args()
     print(">>> MLflow-enabled training starting...")
     print(">>> Received hyperparameters:", vars(args))
+    
+    if not XGBOOST_AVAILABLE:
+        print("⚠ Skipping training because XGBoost is not available (local Docker test mode).")
+        return
 
     # Setup MLflow tracking
     mlflow_enabled = setup_mlflow_tracking(
@@ -100,9 +123,8 @@ def main():
         experiment_name="house-price-prediction"
     )
     
-    if mlflow_enabled:
+    if mlflow_enabled and mlflow is not None:
         print("MLflow tracking enabled")
-        # Log SageMaker job info
         job_name = os.environ.get('TRAINING_JOB_NAME', 'unknown-training-job')
         log_sagemaker_job_info(job_name, 'training')
     else:
@@ -110,7 +132,6 @@ def main():
 
     dtrain = load_train_dataframe(TRAIN_CHANNEL, args.target)
 
-    # Train with MLflow tracking
     params = {
         "objective": args.objective,
         "max_depth": args.max_depth,
@@ -121,11 +142,13 @@ def main():
         "verbosity": args.verbosity,
     }
     print(">>> XGBoost params:", params)
-    
-    # Train model
+
+    if not XGBOOST_AVAILABLE:
+        print("⚠ Skipped model training because XGBoost is not available.")
+        return
+
     model = xgb.train(params, dtrain, num_boost_round=args.num_round)
     
-    # Calculate training metrics
     train_pred = model.predict(dtrain)
     train_labels = dtrain.get_label()
     train_rmse = np.sqrt(mean_squared_error(train_labels, train_pred))
@@ -135,35 +158,26 @@ def main():
     print(f"Training R²: {train_r2:.4f}")
     
     # Log to MLflow if enabled
-    if mlflow_enabled:
+    if mlflow_enabled and mlflow is not None:
         try:
             with mlflow.start_run(run_name="sagemaker_training"):
-                # Log hyperparameters
                 mlflow.log_params(params)
                 mlflow.log_param("num_round", args.num_round)
                 mlflow.log_param("target_column", args.target)
                 mlflow.log_param("training_data_shape", str(dtrain.num_row()))
                 
-                # Log metrics
                 mlflow.log_metric("train_rmse", train_rmse)
                 mlflow.log_metric("train_r2", train_r2)
                 mlflow.log_metric("num_features", dtrain.num_col())
                 
-                # Log model
                 mlflow.xgboost.log_model(model, "model")
-                
                 print("Model and metrics logged to MLflow")
-                
         except Exception as e:
             print(f"MLflow logging failed: {e}")
-    else:
-        print("MLflow not available - metrics not logged")
 
-    # Save model — SageMaker will package everything in /opt/ml/model into model.tar.gz
     os.makedirs(MODEL_DIR, exist_ok=True)
     model.save_model(os.path.join(MODEL_DIR, "xgboost-model"))
     print("✅ Saved model to /opt/ml/model/xgboost-model")
 
 if __name__ == "__main__":
     main()
-# Updated for pipeline fix
