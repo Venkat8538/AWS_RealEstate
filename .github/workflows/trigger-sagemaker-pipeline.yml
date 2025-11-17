@@ -40,7 +40,6 @@ jobs:
           cp src/models/__init__.py scripts_temp/
           cp src/models/__main__.py scripts_temp/
           cp src/models/setup.py scripts_temp/
-          cp src/models/requirements.txt scripts_temp/
           cp src/evaluation/evaluate.py scripts_temp/
           cp src/models/register_model.py scripts_temp/
           
