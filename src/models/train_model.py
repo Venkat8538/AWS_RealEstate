@@ -10,7 +10,7 @@ from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
 import sys
 
-print("MLflow training script loaded - testing workflow with setup.py")
+print("MLflow training script loaded1 - testing workflow with setup.py")
 
 # Simple MLflow setup without external dependencies
 def setup_mlflow_tracking(tracking_uri=None, experiment_name="house-price-prediction"):
@@ -81,7 +81,12 @@ def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
     print(f"Number of features: {len(X.columns)}")
     print(f"Sample features: {list(X.columns)[:5]}{'...' if len(X.columns) > 5 else ''}")
 
-    dtrain = xgb.DMatrix(X, label=y, feature_names=list(X.columns))
+    dtrain = xgb.DMatrix(
+    X,
+    label=y,
+    feature_names=list(X.columns),
+    enable_categorical=True,   # ← this is the missing piece
+    )
     return dtrain
 
 def main():
