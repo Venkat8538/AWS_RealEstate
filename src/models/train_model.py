@@ -67,6 +67,10 @@ def load_train_dataframe(train_dir: str, target_col: str) -> xgb.DMatrix:
     y = data[target_col]
     X = data.drop(columns=[target_col])
 
+    # 🔥 Fix for XGBoost: convert object columns to categorical
+    for col in X.select_dtypes(include=["object"]).columns:
+        X[col] = X[col].astype("category")
+
     # Save feature names for later use
     os.makedirs(MODEL_DIR, exist_ok=True)
     with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
