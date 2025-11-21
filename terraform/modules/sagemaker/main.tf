@@ -31,7 +31,7 @@ resource "aws_iam_role_policy_attachment" "sagemaker_studio_policy" {
 # ECR access for custom containers
 resource "aws_iam_role_policy_attachment" "ecr_policy" {
   role       = aws_iam_role.sagemaker_execution_role.name
-  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryFullAccess"
 }
 
 # S3 access policy for MLOps bucket

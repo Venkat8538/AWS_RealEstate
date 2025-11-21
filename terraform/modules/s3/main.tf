@@ -55,6 +55,7 @@ resource "aws_s3_object" "folders" {
     "data/featured/",
     "models/trained/",
     "models/artifacts/",
+    "models/registry/",
     "pipelines/",
     "logs/",
     "configs/"

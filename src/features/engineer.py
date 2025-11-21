@@ -3,11 +3,19 @@ import pandas as pd
 import numpy as np
 from datetime import datetime
 import logging
+import json
+import os
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 import joblib
+
+try:
+    import mlflow
+    from mlflow_helper import init_mlflow
+except ImportError:
+    mlflow = None
 
 # Set up logging
 logging.basicConfig(
@@ -90,6 +98,38 @@ def run_feature_engineering(input_file, output_file, preprocessor_file):
     # Save the preprocessor
     joblib.dump(preprocessor, preprocessor_file)
     logger.info(f"Saved preprocessor to {preprocessor_file}")
+    
+    # MLflow logging
+    if mlflow:
+        try:
+            # Use S3 tracking URI from environment
+            tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+            if tracking_uri:
+                print(f"Setting MLflow tracking URI to: {tracking_uri}")
+                mlflow.set_tracking_uri(tracking_uri)
+                
+                # Set experiment
+                experiment_name = "house-price-prediction"
+                try:
+                    mlflow.set_experiment(experiment_name)
+                except Exception:
+                    # Create experiment if it doesn't exist
+                    mlflow.create_experiment(experiment_name)
+                    mlflow.set_experiment(experiment_name)
+                
+                # Start run and log metrics
+                with mlflow.start_run(run_name="feature_engineering"):
+                    mlflow.log_param("features_created", ["house_age", "price_per_sqft", "bed_bath_ratio"])
+                    mlflow.log_metric("num_features", len(df_featured.columns))
+                    mlflow.log_metric("transformed_features", X_transformed.shape[1])
+                    
+                    print("✅ Successfully logged feature engineering to MLflow")
+            else:
+                print("⚠️ MLFLOW_TRACKING_URI not set, skipping MLflow logging")
+        except Exception as e:
+            logger.warning(f"MLflow logging failed: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Save simple CSV for XGBoost
     # Just use the original featured data without complex preprocessing

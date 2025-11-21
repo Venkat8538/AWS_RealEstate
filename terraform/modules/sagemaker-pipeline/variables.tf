@@ -1,20 +1,29 @@
 variable "project_name" {
-  description = "Project name for resource naming"
+  description = "Name of the project"
   type        = string
 }
 
 variable "environment" {
   description = "Environment (dev, staging, prod)"
   type        = string
-  default     = "dev"
 }
 
 variable "sagemaker_role_arn" {
-  description = "ARN of the SageMaker execution role"
+  description = "SageMaker execution role ARN"
   type        = string
 }
 
 variable "s3_bucket_name" {
-  description = "Name of the MLOps S3 bucket"
+  description = "S3 bucket name for MLOps"
+  type        = string
+}
+
+variable "account_id" {
+  description = "AWS account ID"
+  type        = string
+}
+
+variable "mlflow_server_url" {
+  description = "MLflow tracking server URL"
   type        = string
 }

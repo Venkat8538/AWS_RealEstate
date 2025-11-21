@@ -30,6 +30,12 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
 
+      - name: Upload DAGs to S3
+        run: |
+          # Upload DAG files to S3
+          aws s3 sync dags/ s3://house-price-mlops-dev-itzi2hgi/dags/ --delete
+          echo "✅ DAGs uploaded to S3"
+
       - name: Create and upload scripts tarball
         run: |
           # Create scripts directory and copy files

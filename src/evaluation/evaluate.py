@@ -4,6 +4,12 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 
+try:
+    import mlflow
+    from mlflow_helper import init_mlflow
+except ImportError:
+    mlflow = None
+
 def evaluate_model():
     try:
         print("Model Evaluation Started")
@@ -38,6 +44,39 @@ def evaluate_model():
             'test_samples': num_samples
         }
         
+        # MLflow logging
+        if mlflow:
+            try:
+                # Use S3 tracking URI from environment
+                tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+                if tracking_uri:
+                    print(f"Setting MLflow tracking URI to: {tracking_uri}")
+                    mlflow.set_tracking_uri(tracking_uri)
+                    
+                    # Set experiment
+                    experiment_name = "house-price-prediction"
+                    try:
+                        mlflow.set_experiment(experiment_name)
+                    except Exception:
+                        # Create experiment if it doesn't exist
+                        mlflow.create_experiment(experiment_name)
+                        mlflow.set_experiment(experiment_name)
+                    
+                    # Start run and log metrics
+                    with mlflow.start_run(run_name="model_evaluation"):
+                        mlflow.log_metric("eval_rmse", metrics['rmse'])
+                        mlflow.log_metric("eval_mae", metrics['mae'])
+                        mlflow.log_metric("eval_r2", metrics['r2_score'])
+                        mlflow.log_param("test_samples", num_samples)
+                        
+                        print("✅ Successfully logged evaluation to MLflow")
+                else:
+                    print("⚠️ MLFLOW_TRACKING_URI not set, skipping MLflow logging")
+            except Exception as e:
+                print(f"MLflow logging failed: {e}")
+                import traceback
+                traceback.print_exc()
+        
         # Save report
         os.makedirs("/opt/ml/processing/output", exist_ok=True)
         with open("/opt/ml/processing/output/evaluation_report.json", "w") as f:
@@ -48,6 +87,7 @@ def evaluate_model():
         print(f"MAE: {metrics['mae']:.2f}")
         print(f"R² Score: {metrics['r2_score']:.4f}")
         print(f"Performance: {report['model_performance']}")
+        print("✅ Evaluation metrics logged to MLflow")
         
     except Exception as e:
         print(f"Evaluation failed: {e}")

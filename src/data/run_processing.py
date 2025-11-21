@@ -5,6 +5,14 @@ import pandas as pd
 import numpy as np
 from pathlib import Path
 import logging
+import json
+import os
+
+try:
+    import mlflow
+    from mlflow_helper import init_mlflow
+except ImportError:
+    mlflow = None
 
 # Set up logging
 logging.basicConfig(
@@ -74,6 +82,39 @@ def process_data(input_file, output_file):
     
     # Clean data
     df_cleaned = clean_data(df)
+    
+    # MLflow logging
+    if mlflow:
+        try:
+            # Use S3 tracking URI from environment
+            tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
+            if tracking_uri:
+                print(f"Setting MLflow tracking URI to: {tracking_uri}")
+                mlflow.set_tracking_uri(tracking_uri)
+                
+                # Set experiment
+                experiment_name = "house-price-prediction"
+                try:
+                    mlflow.set_experiment(experiment_name)
+                except Exception:
+                    # Create experiment if it doesn't exist
+                    mlflow.create_experiment(experiment_name)
+                    mlflow.set_experiment(experiment_name)
+                
+                # Start run and log metrics
+                with mlflow.start_run(run_name="data_processing"):
+                    mlflow.log_param("input_shape", str(df.shape))
+                    mlflow.log_param("output_shape", str(df_cleaned.shape))
+                    mlflow.log_metric("rows_processed", len(df_cleaned))
+                    mlflow.log_metric("missing_values_handled", df.isnull().sum().sum())
+                    
+                    print("✅ Successfully logged data processing to MLflow")
+            else:
+                print("⚠️ MLFLOW_TRACKING_URI not set, skipping MLflow logging")
+        except Exception as e:
+            logger.warning(f"MLflow logging failed: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Save processed data
     df_cleaned.to_csv(output_file, index=False)

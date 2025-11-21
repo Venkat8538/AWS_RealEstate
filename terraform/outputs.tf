@@ -53,3 +53,23 @@ output "deployment_codebuild_arn" {
   description = "ARN of the deployment CodeBuild project"
   value       = module.deployment_pipeline.codebuild_project_arn
 }
+
+output "mlflow_server_url" {
+  description = "MLflow server URL"
+  value       = module.mlflow_server.mlflow_server_url
+}
+
+output "airflow_server_ip" {
+  description = "Airflow server IP"
+  value       = module.airflow_server.airflow_server_ip
+}
+
+output "airflow_server_url" {
+  description = "Airflow web UI URL"
+  value       = module.airflow_server.airflow_server_url
+}
+
+output "mlflow_server_ip" {
+  description = "MLflow server public IP"
+  value       = module.mlflow_server.mlflow_server_ip
+}

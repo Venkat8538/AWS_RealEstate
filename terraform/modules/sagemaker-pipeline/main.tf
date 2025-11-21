@@ -44,11 +44,11 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
             }
           }
           AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+            ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/data-processing:latest"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/run_processing.py"]
           }
           Environment = {
-            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+            MLFLOW_TRACKING_URI = var.mlflow_server_url
           }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
@@ -107,11 +107,11 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
             }
           }
           AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+            ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/feature-engineering:latest"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/engineer.py"]
           }
           Environment = {
-            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+            MLFLOW_TRACKING_URI = var.mlflow_server_url
           }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
@@ -162,7 +162,7 @@ DependsOn = ["FeatureEngineering"]
 
 Arguments = {
   AlgorithmSpecification = {
-    TrainingImage     = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.2-1"
+    TrainingImage     = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/training:latest"
     TrainingInputMode = "File"
   }
 
@@ -198,7 +198,7 @@ Arguments = {
 
   Environment = {
     S3_BUCKET            = var.s3_bucket_name
-    MLFLOW_TRACKING_URI  = "http://mlflow-service:5000"
+    MLFLOW_TRACKING_URI  = var.mlflow_server_url
   }
 
   HyperParameters = {
@@ -228,11 +228,11 @@ Arguments = {
             }
           }
           AppSpecification = {
-            ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.5-1"
+            ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/evaluation:latest"
             ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/evaluate.py"]
           }
           Environment = {
-            MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+            MLFLOW_TRACKING_URI = var.mlflow_server_url
           }
           RoleArn = var.sagemaker_role_arn
           ProcessingInputs = [
@@ -302,12 +302,12 @@ Arguments = {
               }
             }
             AppSpecification = {
-              ImageUri = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:1.0-1-cpu-py3"
+              ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
               ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/register_model.py"]
             }
             Environment = {
               AWS_DEFAULT_REGION = "us-east-1"
-              MLFLOW_TRACKING_URI = "http://mlflow-service:5000"
+              MLFLOW_TRACKING_URI = var.mlflow_server_url
             }
             RoleArn = var.sagemaker_role_arn
             ProcessingInputs = [
@@ -342,7 +342,7 @@ Arguments = {
                   OutputName = "registration-metadata"
                   AppManaged = false
                   S3Output = {
-                    S3Uri = "s3://${var.s3_bucket_name}/models/registry"
+                    S3Uri = "s3://${var.s3_bucket_name}/models/registry/"
                     LocalPath = "/opt/ml/processing/output"
                     S3UploadMode = "EndOfJob"
                   }

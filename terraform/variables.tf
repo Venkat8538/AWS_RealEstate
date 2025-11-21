@@ -27,3 +27,10 @@ variable "github_token" {
   type        = string
   sensitive   = true
 }
+
+variable "airflow_db_password" {
+  description = "Password for Airflow PostgreSQL database"
+  type        = string
+  sensitive   = true
+  default     = "airflow123!"
+}

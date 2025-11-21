@@ -18,6 +18,9 @@ provider "aws" {
   region = var.aws_region
 }
 
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 # S3 Module for MLOps
 module "s3" {
   source = "./modules/s3"
@@ -33,6 +36,46 @@ module "sagemaker" {
   project_name   = var.project_name
   environment    = var.environment
   s3_bucket_arn  = module.s3.bucket_arn
+  s3_bucket      = module.s3.bucket_name
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+  }
+}
+
+# ECR Module for Model Registration
+module "ecr" {
+  source = "./modules/ecr"
+  
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+# MLflow Server Module
+module "mlflow_server" {
+  source = "./modules/mlflow-server"
+  
+  project_name   = var.project_name
+  s3_bucket_name = module.s3.bucket_name
+}
+
+# RDS Module for Airflow
+module "rds" {
+  source = "./modules/rds"
+  
+  project_name = var.project_name
+  db_password  = var.airflow_db_password
+}
+
+# Airflow Server Module
+module "airflow_server" {
+  source = "./modules/airflow-server"
+  
+  project_name = var.project_name
+  db_endpoint  = module.rds.db_endpoint
+  db_name      = module.rds.db_name
+  db_username  = module.rds.db_username
+  db_password  = var.airflow_db_password
 }
 
 # SageMaker Pipeline Module
@@ -43,6 +86,8 @@ module "sagemaker_pipeline" {
   environment         = var.environment
   sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
   s3_bucket_name      = module.s3.bucket_name
+  account_id          = data.aws_caller_identity.current.account_id
+  mlflow_server_url   = module.mlflow_server.mlflow_server_url
 }
 
 # EventBridge Module for GitHub Integration (optional - pipeline now uses Python SDK)
