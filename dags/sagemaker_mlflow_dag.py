@@ -169,4 +169,4 @@ validate_deployment_task = PythonOperator(
 )
 
 # Task dependencies
-start_pipeline_task >> wait_pipeline_task >> log_metadata_task >> deploy_endpoint_task >> validate_deployment_task
+start_pipeline_task >> wait_pipeline_task >> log_metadata_task >> deploy_endpoint_task >> validate_deployment_task# Updated Fri Nov 21 21:13:36 CST 2025
