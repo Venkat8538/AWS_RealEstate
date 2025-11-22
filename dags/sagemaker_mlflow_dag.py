@@ -2,13 +2,8 @@ from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.operators.python_operator import PythonOperator
 import boto3
-import mlflow
-import mlflow.sagemaker
 import json
-
-# MLflow configuration
-MLFLOW_TRACKING_URI = "http://23.21.206.232:5000"
-mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+import requests
 
 # AWS configuration
 REGION_NAME = 'us-east-1'
@@ -50,33 +45,42 @@ def wait_for_pipeline(**context):
     
     return status
 
-def register_model_mlflow(**context):
-    import mlflow.sagemaker
+def log_model_metadata(**context):
+    # Log model metadata to MLflow via HTTP API
+    mlflow_url = "http://23.21.206.232:5000"
     
-    # Set experiment
-    experiment_name = "house-price-mlops"
+    # Create experiment if not exists
+    experiment_data = {"name": "house-price-mlops"}
     try:
-        mlflow.create_experiment(experiment_name)
+        requests.post(f"{mlflow_url}/api/2.0/mlflow/experiments/create", json=experiment_data)
     except:
         pass
     
-    mlflow.set_experiment(experiment_name)
+    # Start a run and log metadata
+    run_data = {
+        "experiment_id": "0",
+        "start_time": int(datetime.now().timestamp() * 1000)
+    }
     
-    with mlflow.start_run(run_name="sagemaker-pipeline-model"):
-        # Log model metadata
-        mlflow.log_param("pipeline_name", PIPELINE_NAME)
-        mlflow.log_param("endpoint_name", ENDPOINT_NAME)
-        mlflow.log_param("model_source", "sagemaker-pipeline")
+    run_response = requests.post(f"{mlflow_url}/api/2.0/mlflow/runs/create", json=run_data)
+    run_id = run_response.json().get("run", {}).get("info", {}).get("run_id")
+    
+    if run_id:
+        # Log parameters
+        params = [
+            {"key": "pipeline_name", "value": PIPELINE_NAME},
+            {"key": "endpoint_name", "value": ENDPOINT_NAME},
+            {"key": "model_source", "value": "sagemaker-pipeline"}
+        ]
         
-        # Register the model in MLflow
-        model_name = "house-price-model"
-        model_version = mlflow.register_model(
-            model_uri=f"sagemaker:/{ENDPOINT_NAME}",
-            name=model_name
-        )
+        for param in params:
+            requests.post(f"{mlflow_url}/api/2.0/mlflow/runs/log-parameter", 
+                         json={"run_id": run_id, **param})
         
-        print(f"Registered model {model_name} version {model_version.version}")
-        return model_version.version
+        print(f"Logged model metadata to MLflow run: {run_id}")
+        return run_id
+    
+    return "metadata_logged"
 
 def deploy_to_endpoint(**context):
     sagemaker_client = boto3.client('sagemaker', region_name=REGION_NAME)
@@ -146,9 +150,9 @@ wait_pipeline_task = PythonOperator(
     dag=dag
 )
 
-register_model_task = PythonOperator(
-    task_id='register_model',
-    python_callable=register_model_mlflow,
+log_metadata_task = PythonOperator(
+    task_id='log_metadata',
+    python_callable=log_model_metadata,
     dag=dag
 )
 
@@ -165,4 +169,4 @@ validate_deployment_task = PythonOperator(
 )
 
 # Task dependencies
-start_pipeline_task >> wait_pipeline_task >> register_model_task >> deploy_endpoint_task >> validate_deployment_task
+start_pipeline_task >> wait_pipeline_task >> log_metadata_task >> deploy_endpoint_task >> validate_deployment_task
