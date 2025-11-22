@@ -350,6 +350,71 @@ Arguments = {
               ]
             }
           }
+        },
+        {
+          Name = "ModelDeployment"
+          Type = "Processing"
+          DependsOn = ["ModelRegistration"]
+          Arguments = {
+            ProcessingResources = {
+              ClusterConfig = {
+                InstanceType = {
+                  Get = "Parameters.ProcessingInstanceType"
+                }
+                InstanceCount = 1
+                VolumeSizeInGB = 30
+              }
+            }
+            AppSpecification = {
+              ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
+              ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/deploy_model.py"]
+            }
+            Environment = {
+              AWS_DEFAULT_REGION = "us-east-1"
+              ENDPOINT_NAME = "house-price-prod"
+              MODEL_NAME = "house-price-model"
+            }
+            RoleArn = var.sagemaker_role_arn
+            ProcessingInputs = [
+              {
+                InputName = "model-artifacts"
+                AppManaged = false
+                S3Input = {
+                  S3Uri = {
+                    Get = "Steps.ModelTraining.ModelArtifacts.S3ModelArtifacts"
+                  }
+                  LocalPath = "/opt/ml/processing/input/model"
+                  S3DataType = "S3Prefix"
+                  S3InputMode = "File"
+                  S3DataDistributionType = "FullyReplicated"
+                }
+              },
+              {
+                InputName = "code"
+                AppManaged = false
+                S3Input = {
+                  S3Uri = "s3://${var.s3_bucket_name}/scripts/deploy_model.py"
+                  LocalPath = "/opt/ml/processing/input/code"
+                  S3DataType = "S3Prefix"
+                  S3InputMode = "File"
+                  S3DataDistributionType = "FullyReplicated"
+                }
+              }
+            ]
+            ProcessingOutputConfig = {
+              Outputs = [
+                {
+                  OutputName = "deployment-metadata"
+                  AppManaged = false
+                  S3Output = {
+                    S3Uri = "s3://${var.s3_bucket_name}/deployment/"
+                    LocalPath = "/opt/ml/processing/output"
+                    S3UploadMode = "EndOfJob"
+                  }
+                }
+              ]
+            }
+          }
         }
       ]
     })
