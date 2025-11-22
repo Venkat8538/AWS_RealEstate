@@ -49,6 +49,7 @@ jobs:
           cp src/models/setup.py scripts_temp/
           cp src/evaluation/evaluate.py scripts_temp/
           cp src/models/register_model.py scripts_temp/
+          cp src/models/deploy_model.py scripts_temp/
           
           # Create tarball
           tar -czf scripts.tar.gz -C scripts_temp .
