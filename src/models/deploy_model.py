@@ -17,17 +17,22 @@ def deploy_model():
         # Initialize SageMaker client
         sagemaker_client = boto3.client('sagemaker', region_name=region)
         
-        # Get model artifacts path
-        model_data_url = os.environ.get('SM_CHANNEL_MODEL', '/opt/ml/processing/input/model')
-        if os.path.isdir(model_data_url):
-            # Find model.tar.gz in the directory
-            import glob
-            model_files = glob.glob(os.path.join(model_data_url, "**/*.tar.gz"), recursive=True)
-            if model_files:
-                # Convert local path to S3 path (this is a simplified approach)
-                model_data_url = "s3://house-price-mlops-dev-itzi2hgi/models/trained/latest/model.tar.gz"
+        # Get model artifacts path from environment or use default
+        model_data_url = os.environ.get('MODEL_DATA_URL')
+        if not model_data_url:
+            # Fallback to checking local model directory
+            local_model_path = os.environ.get('SM_CHANNEL_MODEL', '/opt/ml/processing/input/model')
+            if os.path.isdir(local_model_path):
+                import glob
+                model_files = glob.glob(os.path.join(local_model_path, "**/*.tar.gz"), recursive=True)
+                if model_files:
+                    # Use the bucket from environment
+                    bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+                    model_data_url = f"s3://{bucket_name}/models/trained/model.tar.gz"
+                else:
+                    raise FileNotFoundError("No model.tar.gz found in model artifacts")
             else:
-                raise FileNotFoundError("No model.tar.gz found in model artifacts")
+                raise FileNotFoundError("Model artifacts path not found")
         
         print(f"Deploying model from: {model_data_url}")
         
