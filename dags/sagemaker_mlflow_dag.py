@@ -78,21 +78,39 @@ def log_model_to_mlflow(**context):
     """Create an MLflow run and log model metadata + evaluation metrics from S3."""
     s3_client = boto3.client("s3", region_name=REGION_NAME)
 
-    # 1. Ensure experiment exists (ignore if it already exists)
-    experiment_payload = {"name": MLFLOW_EXPERIMENT_NAME}
+    # 1. Get or create experiment
+    experiment_id = "0"  # default
     try:
-        requests.post(
+        # Try to create experiment
+        experiment_payload = {"name": MLFLOW_EXPERIMENT_NAME}
+        create_response = requests.post(
             f"{MLFLOW_URL}/api/2.0/mlflow/experiments/create",
             json=experiment_payload,
             timeout=5,
         )
+        if create_response.status_code == 200:
+            experiment_id = create_response.json().get("experiment_id", "0")
+            print(f"Created experiment: {MLFLOW_EXPERIMENT_NAME} with ID: {experiment_id}")
     except Exception as e:
-        # Most likely "RESOURCE_ALREADY_EXISTS" – safe to ignore
-        print(f"Experiment create call returned non-critical error: {e}")
+        print(f"Experiment create failed, trying to get existing: {e}")
+        
+    # Try to get existing experiment if create failed
+    if experiment_id == "0":
+        try:
+            get_response = requests.get(
+                f"{MLFLOW_URL}/api/2.0/mlflow/experiments/get-by-name",
+                params={"experiment_name": MLFLOW_EXPERIMENT_NAME},
+                timeout=5,
+            )
+            if get_response.status_code == 200:
+                experiment_id = get_response.json().get("experiment", {}).get("experiment_id", "0")
+                print(f"Found existing experiment: {MLFLOW_EXPERIMENT_NAME} with ID: {experiment_id}")
+        except Exception as e:
+            print(f"Could not get experiment, using default: {e}")
 
     # 2. Start a new run
     run_payload = {
-        "experiment_id": "0",  # default experiment; adjust if you manage IDs explicitly
+        "experiment_id": experiment_id,
         "start_time": int(datetime.now().timestamp() * 1000),
     }
     run_response = requests.post(
