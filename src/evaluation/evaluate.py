@@ -82,6 +82,10 @@ def evaluate_model():
         with open("/opt/ml/processing/output/evaluation_report.json", "w") as f:
             json.dump(report, f, indent=2)
         
+        # Save metrics in format expected by DAG
+        with open("/opt/ml/processing/output/evaluation.json", "w") as f:
+            json.dump(metrics, f, indent=2)
+        
         print(f"Model Evaluation Complete:")
         print(f"RMSE: {metrics['rmse']:.2f}")
         print(f"MAE: {metrics['mae']:.2f}")
