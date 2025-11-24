@@ -4,7 +4,7 @@ resource "aws_sagemaker_model" "house_price_model" {
 
   primary_container {
     image          = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1-cpu-py3"
-    model_data_url = "s3://${var.s3_bucket}/model/model.tar.gz"
+    model_data_url = "s3://${var.s3_bucket}/models/trained/model.tar.gz"
   }
 
   tags = var.tags
