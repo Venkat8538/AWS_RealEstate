@@ -17,22 +17,31 @@ def deploy_model():
         # Initialize SageMaker client
         sagemaker_client = boto3.client('sagemaker', region_name=region)
         
-        # Get model artifacts path from environment or use default
+        # Get model artifacts path - should be passed from training step
         model_data_url = os.environ.get('MODEL_DATA_URL')
         if not model_data_url:
-            # Fallback to checking local model directory
-            local_model_path = os.environ.get('SM_CHANNEL_MODEL', '/opt/ml/processing/input/model')
-            if os.path.isdir(local_model_path):
-                import glob
-                model_files = glob.glob(os.path.join(local_model_path, "**/*.tar.gz"), recursive=True)
-                if model_files:
-                    # Use the bucket from environment
-                    bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
-                    model_data_url = f"s3://{bucket_name}/models/trained/model.tar.gz"
+            # Try to find the latest model in S3
+            s3_client = boto3.client('s3')
+            bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+            
+            try:
+                # List all training job folders
+                response = s3_client.list_objects_v2(
+                    Bucket=bucket_name,
+                    Prefix='models/trained/pipelines-',
+                    Delimiter='/'
+                )
+                
+                if 'CommonPrefixes' in response:
+                    # Get the most recent folder (last modified)
+                    folders = [prefix['Prefix'] for prefix in response['CommonPrefixes']]
+                    latest_folder = sorted(folders)[-1]  # Get latest alphabetically
+                    model_data_url = f"s3://{bucket_name}/{latest_folder}output/model.tar.gz"
+                    print(f"Found latest model at: {model_data_url}")
                 else:
-                    raise FileNotFoundError("No model.tar.gz found in model artifacts")
-            else:
-                raise FileNotFoundError("Model artifacts path not found")
+                    raise FileNotFoundError("No training job folders found")
+            except Exception as e:
+                raise FileNotFoundError(f"Could not find model artifacts: {e}")
         
         print(f"Deploying model from: {model_data_url}")
         
