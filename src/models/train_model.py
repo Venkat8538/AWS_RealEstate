@@ -1,3 +1,4 @@
+# XGBoost model training script for SageMaker MLOps pipeline
 import argparse
 import os
 import glob
