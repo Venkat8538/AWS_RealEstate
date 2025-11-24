@@ -78,11 +78,13 @@ def log_model_to_mlflow(**context):
     """Create an MLflow run and log model metadata + evaluation metrics from S3."""
     s3_client = boto3.client("s3", region_name=REGION_NAME)
 
-    # 1. Get or create experiment
-    experiment_id = "0"  # default
+    # 1. Get or create experiment - use default if issues
+    experiment_id = "0"  # default experiment
     try:
-        # Try to create experiment
-        experiment_payload = {"name": MLFLOW_EXPERIMENT_NAME}
+        # Try to create new experiment with timestamp to avoid conflicts
+        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
+        experiment_name = f"{MLFLOW_EXPERIMENT_NAME}-{timestamp}"
+        experiment_payload = {"name": experiment_name}
         create_response = requests.post(
             f"{MLFLOW_URL}/api/2.0/mlflow/experiments/create",
             json=experiment_payload,
@@ -90,23 +92,11 @@ def log_model_to_mlflow(**context):
         )
         if create_response.status_code == 200:
             experiment_id = create_response.json().get("experiment_id", "0")
-            print(f"Created experiment: {MLFLOW_EXPERIMENT_NAME} with ID: {experiment_id}")
+            print(f"Created new experiment: {experiment_name} with ID: {experiment_id}")
+        else:
+            print(f"Failed to create experiment, using default. Response: {create_response.text}")
     except Exception as e:
-        print(f"Experiment create failed, trying to get existing: {e}")
-        
-    # Try to get existing experiment if create failed
-    if experiment_id == "0":
-        try:
-            get_response = requests.get(
-                f"{MLFLOW_URL}/api/2.0/mlflow/experiments/get-by-name",
-                params={"experiment_name": MLFLOW_EXPERIMENT_NAME},
-                timeout=5,
-            )
-            if get_response.status_code == 200:
-                experiment_id = get_response.json().get("experiment", {}).get("experiment_id", "0")
-                print(f"Found existing experiment: {MLFLOW_EXPERIMENT_NAME} with ID: {experiment_id}")
-        except Exception as e:
-            print(f"Could not get experiment, using default: {e}")
+        print(f"Experiment creation failed, using default experiment: {e}")
 
     # 2. Start a new run
     run_payload = {
