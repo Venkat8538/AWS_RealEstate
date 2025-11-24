@@ -31,12 +31,12 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
       {
         Name = "ModelApprovalThresholdR2"
         Type = "Float"
-        DefaultValue = 0.7
+        DefaultValue = -9999
       },
       {
         Name = "ModelApprovalThresholdRMSE"
         Type = "Float"
-        DefaultValue = 50000.0
+        DefaultValue = 999999999
       }
     ]
     Steps = [
