@@ -84,25 +84,38 @@ def deploy_model():
         
         # 3. Create or Update Endpoint
         try:
-            # Check if endpoint exists
+            # Check if endpoint exists and its status
             try:
-                sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
-                # Endpoint exists, update it
-                update_response = sagemaker_client.update_endpoint(
-                    EndpointName=endpoint_name,
-                    EndpointConfigName=endpoint_config_name
-                )
-                print(f"Updated existing endpoint: {endpoint_name}")
-                deployment_action = "UPDATED"
+                endpoint_desc = sagemaker_client.describe_endpoint(EndpointName=endpoint_name)
+                endpoint_status = endpoint_desc['EndpointStatus']
+                print(f"Endpoint exists with status: {endpoint_status}")
                 
-            except sagemaker_client.exceptions.ClientError:
-                # Endpoint doesn't exist, create it
-                create_response = sagemaker_client.create_endpoint(
-                    EndpointName=endpoint_name,
-                    EndpointConfigName=endpoint_config_name
-                )
-                print(f"Created new endpoint: {endpoint_name}")
-                deployment_action = "CREATED"
+                if endpoint_status in ['Creating', 'Updating']:
+                    print(f"Endpoint is {endpoint_status}, skipping deployment")
+                    deployment_action = "SKIPPED_IN_PROGRESS"
+                elif endpoint_status == 'InService':
+                    # Endpoint exists and ready, update it
+                    update_response = sagemaker_client.update_endpoint(
+                        EndpointName=endpoint_name,
+                        EndpointConfigName=endpoint_config_name
+                    )
+                    print(f"Updated existing endpoint: {endpoint_name}")
+                    deployment_action = "UPDATED"
+                else:
+                    print(f"Endpoint in unexpected state: {endpoint_status}")
+                    deployment_action = "SKIPPED_UNEXPECTED_STATE"
+                    
+            except sagemaker_client.exceptions.ClientError as e:
+                if 'does not exist' in str(e) or 'ValidationException' in str(e):
+                    # Endpoint doesn't exist, create it
+                    create_response = sagemaker_client.create_endpoint(
+                        EndpointName=endpoint_name,
+                        EndpointConfigName=endpoint_config_name
+                    )
+                    print(f"Created new endpoint: {endpoint_name}")
+                    deployment_action = "CREATED"
+                else:
+                    raise
         
         except Exception as e:
             print(f"Endpoint deployment failed: {e}")
