@@ -192,34 +192,14 @@ def smoke_test_endpoint_prediction(**context):
     """Send a small test payload to the endpoint to verify predictions work."""
     sagemaker_runtime = boto3.client("sagemaker-runtime", region_name=REGION_NAME)
 
-    # This payload must match your model's expected input format
-    test_data = {
-        "instances": [
-            {
-                "features": [
-                    3,
-                    2,
-                    1500,
-                    7000,
-                    1,
-                    0,
-                    0,
-                    3,
-                    7,
-                    1500,
-                    0,
-                    1990,
-                    0,
-                ]
-            }
-        ]
-    }
+    # XGBoost expects CSV format
+    test_data = "3,2,1500,7000,1,0,0,3,7,1500,0,1990,0"
 
     try:
         response = sagemaker_runtime.invoke_endpoint(
             EndpointName=ENDPOINT_NAME,
-            ContentType="application/json",
-            Body=json.dumps(test_data),
+            ContentType="text/csv",
+            Body=test_data,
         )
 
         result = json.loads(response["Body"].read().decode())
