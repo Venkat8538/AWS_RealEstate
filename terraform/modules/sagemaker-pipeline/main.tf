@@ -27,6 +27,16 @@ resource "aws_sagemaker_pipeline" "mlops_pipeline" {
         Name = "TrainingInstanceType"
         Type = "String"
         DefaultValue = "ml.m5.large"
+      },
+      {
+        Name = "ModelApprovalThresholdR2"
+        Type = "Float"
+        DefaultValue = 0.7
+      },
+      {
+        Name = "ModelApprovalThresholdRMSE"
+        Type = "Float"
+        DefaultValue = 50000.0
       }
     ]
     Steps = [
@@ -286,134 +296,179 @@ Arguments = {
             ]
           }
         }
+        PropertyFiles = [
+          {
+            PropertyFileName = "evaluation_report"
+            OutputName = "evaluation-report"
+            FilePath = "evaluation_report.json"
+          }
+        ]
       },
         {
-          Name = "ModelRegistration"
-          Type = "Processing"
+          Name = "ModelApprovalGate"
+          Type = "Condition"
           DependsOn = ["ModelEvaluation"]
           Arguments = {
-            ProcessingResources = {
-              ClusterConfig = {
-                InstanceType = {
-                  Get = "Parameters.ProcessingInstanceType"
-                }
-                InstanceCount = 1
-                VolumeSizeInGB = 30
-              }
-            }
-            AppSpecification = {
-              ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
-              ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/register_model.py"]
-            }
-            Environment = {
-              AWS_DEFAULT_REGION = "us-east-1"
-              MLFLOW_TRACKING_URI = var.mlflow_server_url
-            }
-            RoleArn = var.sagemaker_role_arn
-            ProcessingInputs = [
+            Conditions = [
               {
-                InputName = "evaluation-report"
-                AppManaged = false
-                S3Input = {
-                  S3Uri = {
-                    Get = "Steps.ModelEvaluation.ProcessingOutputConfig.Outputs['evaluation-report'].S3Output.S3Uri"
+                Type = "GreaterThanOrEqualTo"
+                LeftValue = {
+                  "Std:JsonGet" = {
+                    PropertyFile = {
+                      Get = "Steps.ModelEvaluation.PropertyFiles.evaluation_report"
+                    }
+                    Path = "evaluation_metrics.r2_score"
                   }
-                  LocalPath = "/opt/ml/processing/input/evaluation"
-                  S3DataType = "S3Prefix"
-                  S3InputMode = "File"
-                  S3DataDistributionType = "FullyReplicated"
+                }
+                RightValue = {
+                  Get = "Parameters.ModelApprovalThresholdR2"
                 }
               },
               {
-                InputName = "code"
-                AppManaged = false
-                S3Input = {
-                  S3Uri = "s3://${var.s3_bucket_name}/scripts/register_model.py"
-                  LocalPath = "/opt/ml/processing/input/code"
-                  S3DataType = "S3Prefix"
-                  S3InputMode = "File"
-                  S3DataDistributionType = "FullyReplicated"
+                Type = "LessThanOrEqualTo"
+                LeftValue = {
+                  "Std:JsonGet" = {
+                    PropertyFile = {
+                      Get = "Steps.ModelEvaluation.PropertyFiles.evaluation_report"
+                    }
+                    Path = "evaluation_metrics.rmse"
+                  }
+                }
+                RightValue = {
+                  Get = "Parameters.ModelApprovalThresholdRMSE"
                 }
               }
             ]
-            ProcessingOutputConfig = {
-              Outputs = [
-                {
-                  OutputName = "registration-metadata"
-                  AppManaged = false
-                  S3Output = {
-                    S3Uri = "s3://${var.s3_bucket_name}/models/registry/"
-                    LocalPath = "/opt/ml/processing/output"
-                    S3UploadMode = "EndOfJob"
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
-          Name = "ModelDeployment"
-          Type = "Processing"
-          DependsOn = ["ModelRegistration"]
-          Arguments = {
-            ProcessingResources = {
-              ClusterConfig = {
-                InstanceType = {
-                  Get = "Parameters.ProcessingInstanceType"
-                }
-                InstanceCount = 1
-                VolumeSizeInGB = 30
-              }
-            }
-            AppSpecification = {
-              ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
-              ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/deploy_model.py"]
-            }
-            Environment = {
-              AWS_DEFAULT_REGION = "us-east-1"
-              ENDPOINT_NAME = "house-price-prod"
-              MODEL_NAME = "house-price-model"
-            }
-            RoleArn = var.sagemaker_role_arn
-            ProcessingInputs = [
+            IfSteps = [
               {
-                InputName = "model-artifacts"
-                AppManaged = false
-                S3Input = {
-                  S3Uri = {
-                    Get = "Steps.ModelTraining.ModelArtifacts.S3ModelArtifacts"
+                Name = "ModelRegistration"
+                Type = "Processing"
+                Arguments = {
+                  ProcessingResources = {
+                    ClusterConfig = {
+                      InstanceType = {
+                        Get = "Parameters.ProcessingInstanceType"
+                      }
+                      InstanceCount = 1
+                      VolumeSizeInGB = 30
+                    }
                   }
-                  LocalPath = "/opt/ml/processing/input/model"
-                  S3DataType = "S3Prefix"
-                  S3InputMode = "File"
-                  S3DataDistributionType = "FullyReplicated"
+                  AppSpecification = {
+                    ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
+                    ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/register_model.py"]
+                  }
+                  Environment = {
+                    AWS_DEFAULT_REGION = "us-east-1"
+                    MLFLOW_TRACKING_URI = var.mlflow_server_url
+                  }
+                  RoleArn = var.sagemaker_role_arn
+                  ProcessingInputs = [
+                    {
+                      InputName = "evaluation-report"
+                      AppManaged = false
+                      S3Input = {
+                        S3Uri = {
+                          Get = "Steps.ModelEvaluation.ProcessingOutputConfig.Outputs['evaluation-report'].S3Output.S3Uri"
+                        }
+                        LocalPath = "/opt/ml/processing/input/evaluation"
+                        S3DataType = "S3Prefix"
+                        S3InputMode = "File"
+                        S3DataDistributionType = "FullyReplicated"
+                      }
+                    },
+                    {
+                      InputName = "code"
+                      AppManaged = false
+                      S3Input = {
+                        S3Uri = "s3://${var.s3_bucket_name}/scripts/register_model.py"
+                        LocalPath = "/opt/ml/processing/input/code"
+                        S3DataType = "S3Prefix"
+                        S3InputMode = "File"
+                        S3DataDistributionType = "FullyReplicated"
+                      }
+                    }
+                  ]
+                  ProcessingOutputConfig = {
+                    Outputs = [
+                      {
+                        OutputName = "registration-metadata"
+                        AppManaged = false
+                        S3Output = {
+                          S3Uri = "s3://${var.s3_bucket_name}/models/registry/"
+                          LocalPath = "/opt/ml/processing/output"
+                          S3UploadMode = "EndOfJob"
+                        }
+                      }
+                    ]
+                  }
                 }
               },
               {
-                InputName = "code"
-                AppManaged = false
-                S3Input = {
-                  S3Uri = "s3://${var.s3_bucket_name}/scripts/deploy_model.py"
-                  LocalPath = "/opt/ml/processing/input/code"
-                  S3DataType = "S3Prefix"
-                  S3InputMode = "File"
-                  S3DataDistributionType = "FullyReplicated"
+                Name = "ModelDeployment"
+                Type = "Processing"
+                Arguments = {
+                  ProcessingResources = {
+                    ClusterConfig = {
+                      InstanceType = {
+                        Get = "Parameters.ProcessingInstanceType"
+                      }
+                      InstanceCount = 1
+                      VolumeSizeInGB = 30
+                    }
+                  }
+                  AppSpecification = {
+                    ImageUri = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/model-registration:latest"
+                    ContainerEntrypoint = ["python3", "/opt/ml/processing/input/code/deploy_model.py"]
+                  }
+                  Environment = {
+                    AWS_DEFAULT_REGION = "us-east-1"
+                    ENDPOINT_NAME = "house-price-prod"
+                    MODEL_NAME = "house-price-model"
+                  }
+                  RoleArn = var.sagemaker_role_arn
+                  ProcessingInputs = [
+                    {
+                      InputName = "model-artifacts"
+                      AppManaged = false
+                      S3Input = {
+                        S3Uri = {
+                          Get = "Steps.ModelTraining.ModelArtifacts.S3ModelArtifacts"
+                        }
+                        LocalPath = "/opt/ml/processing/input/model"
+                        S3DataType = "S3Prefix"
+                        S3InputMode = "File"
+                        S3DataDistributionType = "FullyReplicated"
+                      }
+                    },
+                    {
+                      InputName = "code"
+                      AppManaged = false
+                      S3Input = {
+                        S3Uri = "s3://${var.s3_bucket_name}/scripts/deploy_model.py"
+                        LocalPath = "/opt/ml/processing/input/code"
+                        S3DataType = "S3Prefix"
+                        S3InputMode = "File"
+                        S3DataDistributionType = "FullyReplicated"
+                      }
+                    }
+                  ]
+                  ProcessingOutputConfig = {
+                    Outputs = [
+                      {
+                        OutputName = "deployment-metadata"
+                        AppManaged = false
+                        S3Output = {
+                          S3Uri = "s3://${var.s3_bucket_name}/deployment/"
+                          LocalPath = "/opt/ml/processing/output"
+                          S3UploadMode = "EndOfJob"
+                        }
+                      }
+                    ]
+                  }
                 }
               }
             ]
-            ProcessingOutputConfig = {
-              Outputs = [
-                {
-                  OutputName = "deployment-metadata"
-                  AppManaged = false
-                  S3Output = {
-                    S3Uri = "s3://${var.s3_bucket_name}/deployment/"
-                    LocalPath = "/opt/ml/processing/output"
-                    S3UploadMode = "EndOfJob"
-                  }
-                }
-              ]
-            }
+            ElseSteps = []
           }
         }
       ]
