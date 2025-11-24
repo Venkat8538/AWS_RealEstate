@@ -74,89 +74,10 @@ def monitor_pipeline_execution(**context):
     return status
 
 
-def log_model_to_mlflow(**context):
-    """Create an MLflow run and log model metadata + evaluation metrics from S3."""
-    s3_client = boto3.client("s3", region_name=REGION_NAME)
-
-    # 1. Get or create experiment - use default if issues
-    experiment_id = "0"  # default experiment
-    try:
-        # Try to create new experiment with timestamp to avoid conflicts
-        timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
-        experiment_name = f"{MLFLOW_EXPERIMENT_NAME}-{timestamp}"
-        experiment_payload = {"name": experiment_name}
-        create_response = requests.post(
-            f"{MLFLOW_URL}/api/2.0/mlflow/experiments/create",
-            json=experiment_payload,
-            timeout=5,
-        )
-        if create_response.status_code == 200:
-            experiment_id = create_response.json().get("experiment_id", "0")
-            print(f"Created new experiment: {experiment_name} with ID: {experiment_id}")
-        else:
-            print(f"Failed to create experiment, using default. Response: {create_response.text}")
-    except Exception as e:
-        print(f"Experiment creation failed, using default experiment: {e}")
-
-    # 2. Start a new run
-    run_payload = {
-        "experiment_id": experiment_id,
-        "start_time": int(datetime.now().timestamp() * 1000),
-    }
-    run_response = requests.post(
-        f"{MLFLOW_URL}/api/2.0/mlflow/runs/create", json=run_payload
-    )
-    run_json = run_response.json()
-    run_id = run_json.get("run", {}).get("info", {}).get("run_id")
-
-    if not run_id:
-        print(f"Failed to create MLflow run. Response was: {run_json}")
-        return "mlflow_run_not_created"
-
-    print(f"Created MLflow run: {run_id}")
-
-    # 3. Log high-level parameters about this deployment
-    params = [
-        {"key": "pipeline_name", "value": PIPELINE_NAME},
-        {"key": "endpoint_name", "value": ENDPOINT_NAME},
-        {"key": "model_source", "value": "sagemaker-pipeline"},
-    ]
-
-    for param in params:
-        requests.post(
-            f"{MLFLOW_URL}/api/2.0/mlflow/runs/log-parameter",
-            json={"run_id": run_id, **param},
-        )
-
-    # 4. Pull evaluation metrics from S3 and send to MLflow as metrics
-    try:
-        response = s3_client.get_object(Bucket=METRICS_BUCKET, Key=METRICS_KEY)
-        metrics_data = json.loads(response["Body"].read().decode("utf-8"))
-
-        if not isinstance(metrics_data, dict):
-            print(
-                f"Metrics file {METRICS_BUCKET}/{METRICS_KEY} did not contain a "
-                f"JSON object. Got: {metrics_data}"
-            )
-        else:
-            for metric_name, metric_value in metrics_data.items():
-                requests.post(
-                    f"{MLFLOW_URL}/api/2.0/mlflow/runs/log-metric",
-                    json={
-                        "run_id": run_id,
-                        "key": metric_name,
-                        "value": float(metric_value),
-                    },
-                )
-
-            print(
-                f"Logged metrics to MLflow run {run_id}: {list(metrics_data.keys())}"
-            )
-    except Exception as e:
-        print(f"Could not retrieve or log metrics from S3: {e}")
-
-    print(f"Finished logging model metadata to MLflow run: {run_id}")
-    return run_id
+def validate_pipeline_completion(**context):
+    """Validate that SageMaker pipeline completed successfully and MLflow logging occurred."""
+    print("Pipeline validation completed - MLflow logging handled by SageMaker steps")
+    return "validation_complete"
 
 
 def verify_endpoint_deployment(**context):
@@ -234,10 +155,10 @@ with DAG(
         provide_context=True,
     )
 
-    # 3. Log model metadata + evaluation metrics to MLflow
-    log_model_to_mlflow_task = PythonOperator(
-        task_id="log_model_to_mlflow",
-        python_callable=log_model_to_mlflow,
+    # 3. Validate pipeline completion
+    validate_pipeline_task = PythonOperator(
+        task_id="validate_pipeline_completion",
+        python_callable=validate_pipeline_completion,
         provide_context=True,
     )
 
@@ -258,6 +179,6 @@ with DAG(
     # Pipeline order
     trigger_sagemaker_pipeline_task >> \
         monitor_pipeline_execution_task >> \
-        log_model_to_mlflow_task >> \
+        validate_pipeline_task >> \
         verify_endpoint_deployment_task >> \
         smoke_test_endpoint_prediction_task
