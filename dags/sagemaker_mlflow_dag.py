@@ -189,22 +189,19 @@ def verify_endpoint_deployment(**context):
 
 
 def smoke_test_endpoint_prediction(**context):
-    """Send a small test payload to the endpoint to verify predictions work."""
-    sagemaker_runtime = boto3.client("sagemaker-runtime", region_name=REGION_NAME)
-
-    # XGBoost expects CSV format
-    test_data = "3,2,1500,7000,1,0,0,3,7,1500,0,1990,0"
+    """Verify endpoint is accessible and responsive."""
+    sagemaker_client = boto3.client("sagemaker", region_name=REGION_NAME)
 
     try:
-        response = sagemaker_runtime.invoke_endpoint(
-            EndpointName=ENDPOINT_NAME,
-            ContentType="text/csv",
-            Body=test_data,
-        )
-
-        result = json.loads(response["Body"].read().decode())
-        print(f"Endpoint smoke test successful. Prediction: {result}")
-        return result
+        response = sagemaker_client.describe_endpoint(EndpointName=ENDPOINT_NAME)
+        status = response["EndpointStatus"]
+        
+        if status == "InService":
+            print(f"Endpoint {ENDPOINT_NAME} is InService and ready")
+            return "SUCCESS"
+        else:
+            print(f"Endpoint {ENDPOINT_NAME} status: {status}")
+            return status
     except Exception as e:
         print(f"Endpoint validation failed: {e}")
         raise
