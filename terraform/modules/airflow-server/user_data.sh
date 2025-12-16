@@ -7,7 +7,13 @@ echo "=== Starting Airflow user-data ==="
 
 # Basic OS packages
 apt-get update -y
-apt-get install -y python3 python3-pip python3-venv curl
+apt-get install -y python3 python3-pip python3-venv curl unzip
+
+# Install AWS CLI
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+unzip -q awscliv2.zip
+./aws/install
+rm -rf aws awscliv2.zip
 
 # Create airflow user if not exists
 if ! id -u airflow >/dev/null 2>&1; then
@@ -62,11 +68,12 @@ EOF
 # Create S3 DAG sync script
 cat >/home/airflow/sync_dags.sh << 'SYNCEOF'
 #!/bin/bash
+export PATH=/usr/local/bin:/usr/bin:/bin
 S3_BUCKET="house-price-mlops-dev-itzi2hgi"
 DAGS_DIR="/home/airflow/airflow/dags"
 
 # Sync DAGs from S3
-aws s3 sync s3://$S3_BUCKET/dags/ $DAGS_DIR/ --delete --region us-east-1
+/usr/local/bin/aws s3 sync s3://$S3_BUCKET/dags/ $DAGS_DIR/ --delete --region us-east-1
 
 # Set proper permissions
 chown -R airflow:airflow $DAGS_DIR
@@ -80,7 +87,7 @@ chown airflow:airflow /home/airflow/sync_dags.sh
 sudo -u airflow /home/airflow/sync_dags.sh
 
 # Create cron job for DAG sync every minute
-echo "* * * * * /home/airflow/sync_dags.sh" | sudo -u airflow crontab -
+(echo "PATH=/usr/local/bin:/usr/bin:/bin"; echo "* * * * * /home/airflow/sync_dags.sh") | sudo -u airflow crontab -
 
 # Fix permissions just in case
 chown -R airflow:airflow /home/airflow
