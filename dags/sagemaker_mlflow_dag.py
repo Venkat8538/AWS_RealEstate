@@ -20,6 +20,8 @@ METRICS_KEY = "evaluation/evaluation.json"
 MLFLOW_URL = "http://23.21.206.232:5000"
 MLFLOW_EXPERIMENT_NAME = "house-price-mlops"
 
+# Updated: Automated DAG sync now working
+
 
 def trigger_sagemaker_pipeline(**context):
     """Start the SageMaker Pipeline execution and push its ARN to XCom."""
