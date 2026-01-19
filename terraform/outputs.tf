@@ -1,3 +1,19 @@
+# EKS Cluster Outputs
+output "eks_cluster_endpoint" {
+  description = "EKS cluster endpoint"
+  value       = module.eks.cluster_endpoint
+}
+
+output "eks_cluster_name" {
+  description = "EKS cluster name"
+  value       = module.eks.cluster_id
+}
+
+output "eks_oidc_provider_arn" {
+  description = "EKS OIDC provider ARN for IRSA"
+  value       = module.eks.oidc_provider_arn
+}
+
 output "s3_bucket_name" {
   description = "Name of the MLOps S3 bucket"
   value       = module.s3.bucket_name
@@ -73,3 +89,13 @@ output "mlflow_server_ip" {
   description = "MLflow server public IP"
   value       = module.mlflow_server.mlflow_server_ip
 }
+
+# output "bamboo_server_url" {
+#   description = "Bamboo Server URL"
+#   value       = module.bamboo_server.bamboo_url
+# }
+
+# output "bamboo_instance_id" {
+#   description = "Bamboo EC2 Instance ID"
+#   value       = module.bamboo_server.instance_id
+# }

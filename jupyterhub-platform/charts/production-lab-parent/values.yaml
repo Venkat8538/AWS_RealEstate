@@ -1,0 +1,31 @@
+global:
+  environment: production
+  domain: example.com
+
+externalSecrets:
+  enabled: true
+  clusterSecretStore:
+    name: aws-secretstore
+
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+  hosts:
+    - host: jupyterhub.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: jupyterhub-tls
+      hosts:
+        - jupyterhub.example.com
+
+jupyterhub:
+  enabled: true
+  hub:
+    existingSecret: jupyterhub-hub-secret
+  proxy:
+    secretToken: ""

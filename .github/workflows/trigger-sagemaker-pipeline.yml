@@ -39,19 +39,16 @@ jobs:
 
       - name: Create and upload scripts tarball
         run: |
-          # Create scripts directory and copy files
+          # Create scripts directory and copy only required files
           mkdir -p scripts_temp
           cp src/data/run_processing.py scripts_temp/
           cp src/features/engineer.py scripts_temp/
           cp src/models/train_model.py scripts_temp/
-          cp src/models/__init__.py scripts_temp/
-          cp src/models/__main__.py scripts_temp/
-          cp src/models/setup.py scripts_temp/
           cp src/evaluation/evaluate.py scripts_temp/
           cp src/models/register_model.py scripts_temp/
           cp src/models/deploy_model.py scripts_temp/
           
-          # Create tarball
+          # Create tarball for SageMaker Script Mode
           tar -czf scripts.tar.gz -C scripts_temp .
           
           # Upload individual scripts and tarball

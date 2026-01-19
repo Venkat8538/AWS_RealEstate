@@ -1,0 +1,110 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.11.3",
+  "variables": {
+    "airflow_db_password": {
+      "value": "airflow123!"
+    },
+    "aws_region": {
+      "value": "us-east-1"
+    },
+    "bamboo_ami_id": {
+      "value": "ami-066279af4a501d501"
+    },
+    "bamboo_key_name": {
+      "value": ""
+    },
+    "bamboo_subnet_id": {
+      "value": "subnet-0c092dfafe0a2b4b2"
+    },
+    "bamboo_vpc_id": {
+      "value": "vpc-0ec06d2e45d4c6de8"
+    },
+    "environment": {
+      "value": "dev"
+    },
+    "github_repository": {
+      "value": "Venkat8538/AWS_RealEstate"
+    },
+    "github_token": {
+      "value": "SHA256:+UNS4qkNpylz8h2PbtRUBkiESDG684dlJG1LCmelXtA"
+    },
+    "project_name": {
+      "value": "house-price"
+    }
+  },
+  "planned_values": {
+    "outputs": {
+      "airflow_server_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": "44.195.50.213"
+      },
+      "airflow_server_url": {
+        "sensitive": false,
+        "type": "string",
+        "value": "http://44.195.50.213:8080"
+      },
+      "deployment_codebuild_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:codebuild:us-east-1:482227257362:project/house-price-deploy-model"
+      },
+      "deployment_pipeline_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:codepipeline:us-east-1:482227257362:house-price-deployment-pipeline"
+      },
+      "github_actions_role_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:iam::482227257362:role/house-price-github-actions-role"
+      },
+      "mlflow_server_ip": {
+        "sensitive": false,
+        "type": "string",
+        "value": "23.21.206.232"
+      },
+      "mlflow_server_url": {
+        "sensitive": false,
+        "type": "string",
+        "value": "http://23.21.206.232:5000"
+      },
+      "s3_bucket_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:s3:::house-price-mlops-dev-itzi2hgi"
+      },
+      "s3_bucket_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "house-price-mlops-dev-itzi2hgi"
+      },
+      "sagemaker_domain_id": {
+        "sensitive": false,
+        "type": "string",
+        "value": "d-rr0shep9nrmf"
+      },
+      "sagemaker_execution_role_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:iam::482227257362:role/house-price-sagemaker-execution-role"
+      },
+      "sagemaker_pipeline_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:sagemaker:us-east-1:482227257362:pipeline/house-price-mlops-pipeline"
+      },
+      "sagemaker_pipeline_name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "house-price-mlops-pipeline"
+      },
+      "sagemaker_user_profile_arn": {
+        "sensitive": false,
+        "type": "string",
+        "value": "arn:aws:sagemaker:us-east-1:482227257362:user-profile/d-rr0shep9nrmf/data-scientist"
+      }
+    }
+  }
+}

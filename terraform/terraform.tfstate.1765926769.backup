@@ -1,7 +1,7 @@
 {
   "version": 4,
   "terraform_version": "1.11.3",
-  "serial": 693,
+  "serial": 540,
   "lineage": "72d7e31b-8ddf-0c6c-1f81-c58fb1f70b8f",
   "outputs": {
     "airflow_server_ip": {
@@ -26,18 +26,6 @@
     },
     "deployment_pipeline_arn": {
       "value": "arn:aws:codepipeline:us-east-1:482227257362:house-price-deployment-pipeline",
-      "type": "string"
-    },
-    "eks_cluster_endpoint": {
-      "value": "https://8D9AE9F19E22BC2521D05C84566ED226.gr7.us-east-1.eks.amazonaws.com",
-      "type": "string"
-    },
-    "eks_cluster_name": {
-      "value": "house-price-jupyterhub-cluster",
-      "type": "string"
-    },
-    "eks_oidc_provider_arn": {
-      "value": "arn:aws:iam::482227257362:oidc-provider/oidc.eks.us-east-1.amazonaws.com/id/8D9AE9F19E22BC2521D05C84566ED226",
       "type": "string"
     },
     "github_actions_role_arn": {
@@ -156,10 +144,10 @@
           "attributes": {
             "allocation_id": "eipalloc-04a9400c2ad65f5f8",
             "allow_reassociation": null,
-            "id": "eipassoc-0bbc7e5cd4076a866",
-            "instance_id": "i-0ad84a73a16daa8dd",
-            "network_interface_id": "eni-0e53e16e944e4e9bf",
-            "private_ip_address": "172.31.78.139",
+            "id": "eipassoc-0f179f0ddb9fe80e3",
+            "instance_id": "i-09dc97cd561bf6191",
+            "network_interface_id": "eni-030000ca702732fbf",
+            "private_ip_address": "172.31.64.231",
             "public_ip": "44.195.50.213"
           },
           "sensitive_attributes": [],
@@ -284,7 +272,7 @@
           "schema_version": 1,
           "attributes": {
             "ami": "ami-0fc5d935ebf8bc3bc",
-            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-0ad84a73a16daa8dd",
+            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-09dc97cd561bf6191",
             "associate_public_ip_address": true,
             "availability_zone": "us-east-1f",
             "capacity_reservation_specification": [
@@ -323,7 +311,7 @@
             "host_id": "",
             "host_resource_group_arn": null,
             "iam_instance_profile": "house-price-airflow-profile",
-            "id": "i-0ad84a73a16daa8dd",
+            "id": "i-09dc97cd561bf6191",
             "instance_initiated_shutdown_behavior": "stop",
             "instance_lifecycle": "",
             "instance_market_options": [],
@@ -353,8 +341,8 @@
             "password_data": "",
             "placement_group": "",
             "placement_partition_number": 0,
-            "primary_network_interface_id": "eni-0e53e16e944e4e9bf",
-            "private_dns": "ip-172-31-78-139.ec2.internal",
+            "primary_network_interface_id": "eni-030000ca702732fbf",
+            "private_dns": "ip-172-31-64-231.ec2.internal",
             "private_dns_name_options": [
               {
                 "enable_resource_name_dns_a_record": false,
@@ -362,9 +350,9 @@
                 "hostname_type": "ip-name"
               }
             ],
-            "private_ip": "172.31.78.139",
-            "public_dns": "ec2-44-220-175-73.compute-1.amazonaws.com",
-            "public_ip": "44.220.175.73",
+            "private_ip": "172.31.64.231",
+            "public_dns": "ec2-44-195-50-213.compute-1.amazonaws.com",
+            "public_ip": "44.195.50.213",
             "root_block_device": [
               {
                 "delete_on_termination": true,
@@ -375,7 +363,7 @@
                 "tags": {},
                 "tags_all": {},
                 "throughput": 0,
-                "volume_id": "vol-080c05fb1ca2610db",
+                "volume_id": "vol-01c41048cb3d8c748",
                 "volume_size": 8,
                 "volume_type": "gp2"
               }
@@ -395,7 +383,7 @@
             },
             "tenancy": "default",
             "timeouts": null,
-            "user_data": "80787253b482d948613541c1a6ff2fd2b1f0b491",
+            "user_data": "443c8d7ad3b2fb56f6be7c0c2b1fb45081fd7e8f",
             "user_data_base64": null,
             "user_data_replace_on_change": false,
             "volume_tags": null,
@@ -1879,18 +1867,18 @@
             "allocation_id": "eipalloc-0489d136fcad91919",
             "arn": "arn:aws:ec2:us-east-1:482227257362:elastic-ip/eipalloc-0489d136fcad91919",
             "associate_with_private_ip": null,
-            "association_id": "eipassoc-0bf4f0e016def7ce4",
+            "association_id": "eipassoc-036d063181a5858dc",
             "carrier_ip": "",
             "customer_owned_ip": "",
             "customer_owned_ipv4_pool": "",
             "domain": "vpc",
             "id": "eipalloc-0489d136fcad91919",
-            "instance": "i-092c187b6e6f8e0cd",
+            "instance": "i-01cc73befdc090bdd",
             "ipam_pool_id": null,
             "network_border_group": "us-east-1",
-            "network_interface": "eni-040953a2ba7ea1013",
-            "private_dns": "ip-172-31-18-6.ec2.internal",
-            "private_ip": "172.31.18.6",
+            "network_interface": "eni-09bd8755df018be1d",
+            "private_dns": "ip-172-31-17-206.ec2.internal",
+            "private_ip": "172.31.17.206",
             "ptr_record": "",
             "public_dns": "ec2-23-21-206-232.compute-1.amazonaws.com",
             "public_ip": "23.21.206.232",
@@ -2020,7 +2008,7 @@
           "schema_version": 1,
           "attributes": {
             "ami": "ami-0fc5d935ebf8bc3bc",
-            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-092c187b6e6f8e0cd",
+            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-01cc73befdc090bdd",
             "associate_public_ip_address": true,
             "availability_zone": "us-east-1c",
             "capacity_reservation_specification": [
@@ -2059,7 +2047,7 @@
             "host_id": "",
             "host_resource_group_arn": null,
             "iam_instance_profile": "house-price-mlflow-profile",
-            "id": "i-092c187b6e6f8e0cd",
+            "id": "i-01cc73befdc090bdd",
             "instance_initiated_shutdown_behavior": "stop",
             "instance_lifecycle": "",
             "instance_market_options": [],
@@ -2089,8 +2077,8 @@
             "password_data": "",
             "placement_group": "",
             "placement_partition_number": 0,
-            "primary_network_interface_id": "eni-040953a2ba7ea1013",
-            "private_dns": "ip-172-31-18-6.ec2.internal",
+            "primary_network_interface_id": "eni-09bd8755df018be1d",
+            "private_dns": "ip-172-31-17-206.ec2.internal",
             "private_dns_name_options": [
               {
                 "enable_resource_name_dns_a_record": false,
@@ -2098,9 +2086,9 @@
                 "hostname_type": "ip-name"
               }
             ],
-            "private_ip": "172.31.18.6",
-            "public_dns": "ec2-54-242-190-180.compute-1.amazonaws.com",
-            "public_ip": "54.242.190.180",
+            "private_ip": "172.31.17.206",
+            "public_dns": "ec2-54-160-229-91.compute-1.amazonaws.com",
+            "public_ip": "54.160.229.91",
             "root_block_device": [
               {
                 "delete_on_termination": true,
@@ -2111,7 +2099,7 @@
                 "tags": {},
                 "tags_all": {},
                 "throughput": 0,
-                "volume_id": "vol-0e81989b6c7f7b430",
+                "volume_id": "vol-0e65e988aa52cfb48",
                 "volume_size": 8,
                 "volume_type": "gp2"
               }
@@ -2400,13 +2388,13 @@
             [
               {
                 "type": "get_attr",
-                "value": "password"
+                "value": "password_wo"
               }
             ],
             [
               {
                 "type": "get_attr",
-                "value": "password_wo"
+                "value": "password"
               }
             ]
           ],

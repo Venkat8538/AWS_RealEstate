@@ -108,6 +108,35 @@ module "github_oidc" {
   sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
 }
 
+# EKS Module for JupyterHub Platform
+module "eks" {
+  source = "./modules/eks"
+  
+  cluster_name       = "${var.project_name}-jupyterhub-cluster"
+  kubernetes_version = "1.29"
+  
+  # Use existing VPC
+  create_vpc = false
+  vpc_id     = "vpc-0ec06d2e45d4c6de8"
+  subnet_ids = [
+    "subnet-08ae0c2b4723f5d9d",  # us-east-1a
+    "subnet-0549136184302920c",  # us-east-1b
+    "subnet-0c092dfafe0a2b4b2",  # us-east-1c
+    "subnet-02f04ba7c1bbbf72f"   # us-east-1d
+  ]
+  
+  node_instance_types = ["t3.small"]
+  node_desired_size   = 1
+  node_max_size       = 2
+  node_min_size       = 1
+  
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    Purpose     = "jupyterhub-platform"
+  }
+}
+
 # Deployment Pipeline Module
 module "deployment_pipeline" {
   source = "./modules/deployment-pipeline"
@@ -120,3 +149,14 @@ module "deployment_pipeline" {
   github_repository   = var.github_repository
   github_token        = var.github_token
 }
+
+# Bamboo Server Module (temporarily disabled)
+# module "bamboo_server" {
+#   source     = "./modules/bamboo-server"
+#   
+#   project_name = var.project_name
+#   ami_id       = var.bamboo_ami_id
+#   key_name     = var.bamboo_key_name
+#   vpc_id       = var.bamboo_vpc_id
+#   subnet_id    = var.bamboo_subnet_id
+# }
