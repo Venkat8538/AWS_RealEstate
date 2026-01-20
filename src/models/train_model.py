@@ -79,9 +79,7 @@ def load_train_dataframe(train_dir: str, target_col: str):
         X[col] = X[col].astype("category")
 
     # Save feature names for later use
-    os.makedirs(MODEL_DIR, exist_ok=True)
-    with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
-        json.dump(list(X.columns), f)
+    feature_names_list = list(X.columns)
     
     print(f"Training data shape: {X.shape}")
     print(f"Target column: {target_col}")
@@ -94,7 +92,7 @@ def load_train_dataframe(train_dir: str, target_col: str):
     dtrain = xgb.DMatrix(
         X,
         label=y,
-        feature_names=list(X.columns),
+        feature_names=feature_names_list,
         enable_categorical=True,
     )
     return dtrain
@@ -177,6 +175,10 @@ def main():
     os.makedirs(MODEL_DIR, exist_ok=True)
     model.save_model(os.path.join(MODEL_DIR, "xgboost-model"))
     print("✅ Saved model to /opt/ml/model/xgboost-model")
+    
+    # Save feature names after model (for tar.gz ordering)
+    with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
+        json.dump(list(dtrain.feature_names), f)
 
 if __name__ == "__main__":
     main()
