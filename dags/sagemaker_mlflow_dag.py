@@ -9,7 +9,7 @@ import requests
 
 # AWS and pipeline configuration
 REGION_NAME = "us-east-1"
-PIPELINE_NAME = "house-price-mlops-pipeline1"
+PIPELINE_NAME = "house-price-mlops-pipeline"
 ENDPOINT_NAME = "house-price-prod"
 
 # Where your evaluation metrics are written by the training/evaluation step
@@ -20,7 +20,7 @@ METRICS_KEY = "evaluation/evaluation.json"
 MLFLOW_URL = "http://23.21.206.232:5000"
 MLFLOW_EXPERIMENT_NAME = "house-price-mlops"
 
-# Updated: Automated DAG sync now working
+# Updated: Testing cron sync - Modified to verify S3 sync is working
 
 
 def trigger_sagemaker_pipeline(**context):
