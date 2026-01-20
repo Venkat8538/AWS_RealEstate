@@ -45,6 +45,25 @@ def deploy_model():
         
         print(f"Deploying model from: {model_data_url}")
         
+        # Copy model to static Terraform path for consistency
+        try:
+            s3_client = boto3.client('s3')
+            bucket_name = os.environ.get('S3_BUCKET', 'house-price-mlops-dev-itzi2hgi')
+            
+            # Parse source S3 URL
+            source_key = model_data_url.replace(f"s3://{bucket_name}/", "")
+            dest_key = "models/trained/model.tar.gz"
+            
+            # Copy to static path
+            s3_client.copy_object(
+                Bucket=bucket_name,
+                CopySource={'Bucket': bucket_name, 'Key': source_key},
+                Key=dest_key
+            )
+            print(f"Copied model to static path: s3://{bucket_name}/{dest_key}")
+        except Exception as e:
+            print(f"Warning: Failed to copy model to static path: {e}")
+        
         # Create unique names with timestamp
         timestamp = datetime.now().strftime('%Y%m%d-%H%M%S')
         model_name_unique = f"{model_name}-{timestamp}"
