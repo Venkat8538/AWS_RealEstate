@@ -137,7 +137,7 @@ default_args = {
 with DAG(
     dag_id="house_price_mlops_pipeline",
     default_args=default_args,
-    description="House Price MLOps pipeline orchestrating SageMaker and MLflow",
+    description="House Price MLOps pipeline - Testing S3 sync via cron",
     schedule_interval="@daily",
     catchup=False,
     tags=["mlops", "sagemaker", "mlflow"],
