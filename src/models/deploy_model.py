@@ -75,11 +75,7 @@ def deploy_model():
                 ModelName=model_name_unique,
                 PrimaryContainer={
                     'Image': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1-cpu-py3',
-                    'ModelDataUrl': model_data_url,
-                    'Environment': {
-                        'SAGEMAKER_PROGRAM': 'inference.py',
-                        'SAGEMAKER_SUBMIT_DIRECTORY': '/opt/ml/code'
-                    }
+                    'ModelDataUrl': model_data_url
                 },
                 ExecutionRoleArn=os.environ.get('SAGEMAKER_ROLE_ARN', 
                     'arn:aws:iam::482227257362:role/house-price-sagemaker-execution-role')
