@@ -9,7 +9,7 @@ import requests
 
 # AWS and pipeline configuration
 REGION_NAME = "us-east-1"
-PIPELINE_NAME = "house-price-mlops-pipeline"
+PIPELINE_NAME = "house-price-mlops-pipeline1"
 ENDPOINT_NAME = "house-price-prod"
 
 # Where your evaluation metrics are written by the training/evaluation step
