@@ -173,17 +173,9 @@ def main():
             traceback.print_exc()
 
     os.makedirs(MODEL_DIR, exist_ok=True)
-    # Save as .bst to force legacy binary format (not JSON)
-    model.save_model(os.path.join(MODEL_DIR, "xgboost-model.bst"))
-    print("✅ Saved model to /opt/ml/model/xgboost-model.bst")
-    
-    # Rename to xgboost-model (no extension) for SageMaker container
-    import shutil
-    shutil.move(
-        os.path.join(MODEL_DIR, "xgboost-model.bst"),
-        os.path.join(MODEL_DIR, "xgboost-model")
-    )
-    print("✅ Renamed to xgboost-model (legacy binary format)")
+    # Force legacy binary format using save_model with format parameter
+    model.save_model(os.path.join(MODEL_DIR, "xgboost-model"), format="deprecated")
+    print("✅ Saved model in legacy binary format")
     
     # Save feature names after model (for tar.gz ordering)
     with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
