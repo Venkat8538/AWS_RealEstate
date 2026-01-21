@@ -173,11 +173,19 @@ def main():
             traceback.print_exc()
 
     os.makedirs(MODEL_DIR, exist_ok=True)
-    # Save in old binary format using pickle (SageMaker XGBoost 1.7 container expects this)
-    import pickle
+    # Save using save_raw() to get legacy binary format (not UBJSON)
+    raw_bytes = model.save_raw("deprecated")
     with open(os.path.join(MODEL_DIR, "xgboost-model"), "wb") as f:
-        pickle.dump(model, f)
-    print("✅ Saved model as pickle (legacy format for SageMaker)")
+        f.write(raw_bytes)
+    print("✅ Saved model in legacy binary format using save_raw()")
+    
+    # Verify first byte is not '{' (0x7b)
+    with open(os.path.join(MODEL_DIR, "xgboost-model"), "rb") as f:
+        first_byte = f.read(1)
+        if first_byte == b'{':
+            print("⚠️ WARNING: Model still starts with '{' - may be UBJSON")
+        else:
+            print(f"✅ Model first byte: {first_byte.hex()} (not UBJSON)")
     
     # Save feature names after model (for tar.gz ordering)
     with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
