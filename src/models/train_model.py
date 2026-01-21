@@ -173,9 +173,11 @@ def main():
             traceback.print_exc()
 
     os.makedirs(MODEL_DIR, exist_ok=True)
-    # Force legacy binary format using save_model with format parameter
-    model.save_model(os.path.join(MODEL_DIR, "xgboost-model"), format="deprecated")
-    print("✅ Saved model in legacy binary format")
+    # Save in old binary format using pickle (SageMaker XGBoost 1.7 container expects this)
+    import pickle
+    with open(os.path.join(MODEL_DIR, "xgboost-model"), "wb") as f:
+        pickle.dump(model, f)
+    print("✅ Saved model as pickle (legacy format for SageMaker)")
     
     # Save feature names after model (for tar.gz ordering)
     with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
