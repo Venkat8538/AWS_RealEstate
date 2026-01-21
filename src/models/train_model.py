@@ -186,10 +186,6 @@ def main():
             print("⚠️ WARNING: Model still starts with '{' - may be UBJSON")
         else:
             print(f"✅ Model first byte: {first_byte.hex()} (not UBJSON)")
-    
-    # Save feature names after model (for tar.gz ordering)
-    with open(os.path.join(MODEL_DIR, "feature_names.json"), "w") as f:
-        json.dump(list(dtrain.feature_names), f)
 
 if __name__ == "__main__":
     main()

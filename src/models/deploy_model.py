@@ -74,7 +74,7 @@ def deploy_model():
             model_response = sagemaker_client.create_model(
                 ModelName=model_name_unique,
                 PrimaryContainer={
-                    'Image': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1-cpu-py3',
+                    'Image': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:2.0-1-cpu-py3',
                     'ModelDataUrl': model_data_url
                 },
                 ExecutionRoleArn=os.environ.get('SAGEMAKER_ROLE_ARN', 
