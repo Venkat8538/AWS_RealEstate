@@ -173,19 +173,13 @@ def main():
             traceback.print_exc()
 
     os.makedirs(MODEL_DIR, exist_ok=True)
-    # Save using save_raw() to get legacy binary format (not UBJSON)
-    raw_bytes = model.save_raw("deprecated")
-    with open(os.path.join(MODEL_DIR, "xgboost-model"), "wb") as f:
-        f.write(raw_bytes)
-    print("✅ Saved model in legacy binary format using save_raw()")
+    model_path = os.path.join(MODEL_DIR, "xgboost-model")
+    model.save_model(model_path)
+    print(f"✅ Saved XGBoost binary model to {model_path}")
     
-    # Verify first byte is not '{' (0x7b)
-    with open(os.path.join(MODEL_DIR, "xgboost-model"), "rb") as f:
-        first_byte = f.read(1)
-        if first_byte == b'{':
-            print("⚠️ WARNING: Model still starts with '{' - may be UBJSON")
-        else:
-            print(f"✅ Model first byte: {first_byte.hex()} (not UBJSON)")
+    # Verify only model file exists
+    files = os.listdir(MODEL_DIR)
+    print(f"Files in MODEL_DIR: {files}")
 
 if __name__ == "__main__":
     main()
