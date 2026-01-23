@@ -126,6 +126,7 @@ def main():
         print("⚠ Skipped model training because XGBoost is not available.")
         return
 
+    # Train model
     model = xgb.train(params, dtrain, num_boost_round=args.num_round)
     
     train_pred = model.predict(dtrain)
@@ -174,10 +175,21 @@ def main():
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     model_path = os.path.join(MODEL_DIR, "xgboost-model")
+    
+    # Save in legacy binary format (not JSON/UBJSON)
     model.save_model(model_path)
+    
     print(f"✅ Saved XGBoost binary model to {model_path}")
     
-    # Verify only model file exists
+    # Verify file format
+    with open(model_path, 'rb') as f:
+        first_bytes = f.read(10)
+        print(f"First bytes of model file: {first_bytes[:2]}")
+        if first_bytes[0:1] == b'{':
+            print("⚠️ WARNING: Model saved as JSON format, may cause inference issues")
+        else:
+            print("✅ Model saved in binary format")
+    
     files = os.listdir(MODEL_DIR)
     print(f"Files in MODEL_DIR: {files}")
 
