@@ -3,7 +3,7 @@ resource "aws_sagemaker_model" "house_price_model" {
   execution_role_arn = aws_iam_role.sagemaker_execution_role.arn
 
   primary_container {
-    image          = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:3.0-5-cpu-py3"
+    image          = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1"
     model_data_url = "s3://${var.s3_bucket}/models/trained/model.tar.gz"
   }
 

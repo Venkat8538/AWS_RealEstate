@@ -138,7 +138,7 @@ with DAG(
     dag_id="house_price_mlops_pipeline",
     default_args=default_args,
     description="House Price MLOps pipeline - Testing S3 sync via cron",
-    schedule_interval="@daily",
+    schedule_interval=None,
     catchup=False,
     tags=["mlops", "sagemaker", "mlflow"],
 ) as dag:
