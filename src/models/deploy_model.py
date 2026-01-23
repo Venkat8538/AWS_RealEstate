@@ -117,6 +117,20 @@ def deploy_model():
                 if endpoint_status in ['Creating', 'Updating']:
                     print(f"Endpoint is {endpoint_status}, skipping deployment")
                     deployment_action = "SKIPPED_IN_PROGRESS"
+                elif endpoint_status == 'Failed':
+                    # Delete failed endpoint and recreate
+                    print(f"Endpoint is Failed, deleting and recreating...")
+                    sagemaker_client.delete_endpoint(EndpointName=endpoint_name)
+                    print(f"Deleted failed endpoint, waiting for deletion...")
+                    import time
+                    time.sleep(10)  # Wait for deletion
+                    # Now create new endpoint
+                    create_response = sagemaker_client.create_endpoint(
+                        EndpointName=endpoint_name,
+                        EndpointConfigName=endpoint_config_name
+                    )
+                    print(f"Created new endpoint: {endpoint_name}")
+                    deployment_action = "RECREATED"
                 elif endpoint_status == 'InService':
                     # Endpoint exists and ready, update it
                     update_response = sagemaker_client.update_endpoint(
@@ -126,8 +140,21 @@ def deploy_model():
                     print(f"Updated existing endpoint: {endpoint_name}")
                     deployment_action = "UPDATED"
                 else:
-                    print(f"Endpoint in unexpected state: {endpoint_status}")
-                    deployment_action = "SKIPPED_UNEXPECTED_STATE"
+                    print(f"Endpoint in unexpected state: {endpoint_status}, attempting to delete and recreate")
+                    try:
+                        sagemaker_client.delete_endpoint(EndpointName=endpoint_name)
+                        print(f"Deleted endpoint in {endpoint_status} state")
+                        import time
+                        time.sleep(10)
+                        create_response = sagemaker_client.create_endpoint(
+                            EndpointName=endpoint_name,
+                            EndpointConfigName=endpoint_config_name
+                        )
+                        print(f"Created new endpoint: {endpoint_name}")
+                        deployment_action = "RECREATED"
+                    except Exception as e:
+                        print(f"Failed to recreate endpoint: {e}")
+                        deployment_action = "FAILED_RECREATE"
                     
             except sagemaker_client.exceptions.ClientError as e:
                 if 'does not exist' in str(e) or 'ValidationException' in str(e):
