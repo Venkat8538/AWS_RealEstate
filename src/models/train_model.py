@@ -176,22 +176,33 @@ def main():
     os.makedirs(MODEL_DIR, exist_ok=True)
     model_path = os.path.join(MODEL_DIR, "xgboost-model")
     
-    # Save in legacy binary format (not JSON/UBJSON)
-    model.save_model(model_path)
+    # Force legacy binary format by using deprecated format parameter
+    # SageMaker inference containers expect binary format, not JSON
+    try:
+        # Try XGBoost 2.0+ API
+        model.save_model(model_path, format="deprecated")
+        print("✅ Saved model in deprecated binary format (XGBoost 2.0+)")
+    except TypeError:
+        # Fallback for XGBoost 1.x - save as .bin extension then rename
+        temp_path = os.path.join(MODEL_DIR, "xgboost-model.bin")
+        model.save_model(temp_path)
+        os.rename(temp_path, model_path)
+        print("✅ Saved model in binary format (XGBoost 1.x)")
     
-    print(f"✅ Saved XGBoost binary model to {model_path}")
-    
-    # Verify file format
-    with open(model_path, 'rb') as f:
-        first_bytes = f.read(10)
-        print(f"First bytes of model file: {first_bytes[:2]}")
-        if first_bytes[0:1] == b'{':
-            print("⚠️ WARNING: Model saved as JSON format, may cause inference issues")
-        else:
-            print("✅ Model saved in binary format")
-    
+    # Verify ONLY xgboost-model exists
     files = os.listdir(MODEL_DIR)
     print(f"Files in MODEL_DIR: {files}")
+    if len(files) != 1 or files[0] != "xgboost-model":
+        print(f"⚠️ WARNING: Expected only 'xgboost-model', found: {files}")
+    
+    # Verify file format - binary should NOT start with '{'
+    with open(model_path, 'rb') as f:
+        first_bytes = f.read(10)
+        print(f"First bytes: {first_bytes[:2].hex()}")
+        if first_bytes[0:1] == b'{':
+            print("⚠️ WARNING: Model in JSON format - will cause inference errors")
+        else:
+            print("✅ Model in binary format")
 
 if __name__ == "__main__":
     main()
