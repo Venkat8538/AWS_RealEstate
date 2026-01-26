@@ -172,7 +172,7 @@ DependsOn = ["FeatureEngineering"]
 
 Arguments = {
   AlgorithmSpecification = {
-    TrainingImage     = "${var.account_id}.dkr.ecr.us-east-1.amazonaws.com/training:latest"
+    TrainingImage     = "683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-xgboost:1.7-1"
     TrainingInputMode = "File"
   }
 

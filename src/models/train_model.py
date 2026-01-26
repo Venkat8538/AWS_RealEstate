@@ -140,69 +140,34 @@ def main():
     # Log to MLflow
     if mlflow:
         try:
-            # Use S3 tracking URI from environment
             tracking_uri = os.environ.get('MLFLOW_TRACKING_URI')
             if tracking_uri:
                 print(f"Setting MLflow tracking URI to: {tracking_uri}")
                 mlflow.set_tracking_uri(tracking_uri)
+                mlflow.set_experiment("house-price-prediction")
                 
-                # Set experiment
-                experiment_name = "house-price-prediction"
-                try:
-                    mlflow.set_experiment(experiment_name)
-                except Exception:
-                    # Create experiment if it doesn't exist
-                    mlflow.create_experiment(experiment_name)
-                    mlflow.set_experiment(experiment_name)
-                
-                # Start run and log metrics
                 with mlflow.start_run(run_name="sagemaker_training"):
                     mlflow.log_params(params)
                     mlflow.log_param("num_round", args.num_round)
                     mlflow.log_metric("train_rmse", train_rmse)
                     mlflow.log_metric("train_r2", train_r2)
-                    
-                    # Log model
                     mlflow.xgboost.log_model(model, "model")
-                    
                     print("✅ Successfully logged to MLflow")
-            else:
-                print("⚠️ MLFLOW_TRACKING_URI not set, skipping MLflow logging")
         except Exception as e:
             print(f"MLflow logging failed: {e}")
-            import traceback
-            traceback.print_exc()
 
     os.makedirs(MODEL_DIR, exist_ok=True)
     model_path = os.path.join(MODEL_DIR, "xgboost-model")
     
-    # Force legacy binary format by using deprecated format parameter
-    # SageMaker inference containers expect binary format, not JSON
-    try:
-        # Try XGBoost 2.0+ API
-        model.save_model(model_path, format="deprecated")
-        print("✅ Saved model in deprecated binary format (XGBoost 2.0+)")
-    except TypeError:
-        # Fallback for XGBoost 1.x - save as .bin extension then rename
-        temp_path = os.path.join(MODEL_DIR, "xgboost-model.bin")
-        model.save_model(temp_path)
-        os.rename(temp_path, model_path)
-        print("✅ Saved model in binary format (XGBoost 1.x)")
+    # Save in legacy binary format for XGBoost 1.7 compatibility
+    model.save_model(model_path)
+    print("✅ Saved model in binary format for XGBoost 1.7")
     
-    # Verify ONLY xgboost-model exists
+    # Verify file
     files = os.listdir(MODEL_DIR)
     print(f"Files in MODEL_DIR: {files}")
     if len(files) != 1 or files[0] != "xgboost-model":
         print(f"⚠️ WARNING: Expected only 'xgboost-model', found: {files}")
-    
-    # Verify file format - binary should NOT start with '{'
-    with open(model_path, 'rb') as f:
-        first_bytes = f.read(10)
-        print(f"First bytes: {first_bytes[:2].hex()}")
-        if first_bytes[0:1] == b'{':
-            print("⚠️ WARNING: Model in JSON format - will cause inference errors")
-        else:
-            print("✅ Model in binary format")
 
 if __name__ == "__main__":
     main()
