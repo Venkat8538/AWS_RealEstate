@@ -406,6 +406,7 @@ Arguments = {
               {
                 Name = "ModelDeployment"
                 Type = "Processing"
+                DependsOn = ["ModelRegistration"]
                 Arguments = {
                   ProcessingResources = {
                     ClusterConfig = {
@@ -424,9 +425,27 @@ Arguments = {
                     AWS_DEFAULT_REGION = "us-east-1"
                     ENDPOINT_NAME = "house-price-prod"
                     MODEL_NAME = "house-price-model"
+                    S3_BUCKET = var.s3_bucket_name
+                    SAGEMAKER_ROLE_ARN = var.sagemaker_role_arn
+                    MODEL_DATA_URL = {
+                      Get = "Steps.ModelTraining.ModelArtifacts.S3ModelArtifacts"
+                    }
                   }
                   RoleArn = var.sagemaker_role_arn
                   ProcessingInputs = [
+                    {
+                      InputName = "registration-metadata"
+                      AppManaged = false
+                      S3Input = {
+                        S3Uri = {
+                          Get = "Steps.ModelRegistration.ProcessingOutputConfig.Outputs['registration-metadata'].S3Output.S3Uri"
+                        }
+                        LocalPath = "/opt/ml/processing/input/registration"
+                        S3DataType = "S3Prefix"
+                        S3InputMode = "File"
+                        S3DataDistributionType = "FullyReplicated"
+                      }
+                    },
                     {
                       InputName = "model-artifacts"
                       AppManaged = false

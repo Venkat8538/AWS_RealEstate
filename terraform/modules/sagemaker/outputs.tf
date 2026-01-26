@@ -23,12 +23,12 @@ output "sagemaker_user_profile_arn" {
   value       = aws_sagemaker_user_profile.data_scientist.arn
 }
 
-output "endpoint_name" {
-  description = "Name of the SageMaker endpoint"
-  value       = aws_sagemaker_endpoint.house_price_endpoint.name
-}
+# output "endpoint_name" {
+#   description = "Name of the SageMaker endpoint"
+#   value       = aws_sagemaker_endpoint.house_price_endpoint.name
+# }
 
-output "endpoint_arn" {
-  description = "ARN of the SageMaker endpoint"
-  value       = aws_sagemaker_endpoint.house_price_endpoint.arn
-}
+# output "endpoint_arn" {
+#   description = "ARN of the SageMaker endpoint"
+#   value       = aws_sagemaker_endpoint.house_price_endpoint.arn
+# }

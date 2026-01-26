@@ -4,6 +4,7 @@ import os
 import glob
 import json
 import pandas as pd
+import pickle
 
 # Try importing XGBoost normally (SageMaker will have it)
 try:
@@ -74,12 +75,9 @@ def load_train_dataframe(train_dir: str, target_col: str):
     y = data[target_col]
     X = data.drop(columns=[target_col])
 
-    # 🔥 Fix for XGBoost: convert object columns to categorical
+    # Encode categorical columns as integers (not pandas categorical)
     for col in X.select_dtypes(include=["object"]).columns:
-        X[col] = X[col].astype("category")
-
-    # Save feature names for later use
-    feature_names_list = list(X.columns)
+        X[col] = X[col].astype("category").cat.codes
     
     print(f"Training data shape: {X.shape}")
     print(f"Target column: {target_col}")
@@ -89,12 +87,7 @@ def load_train_dataframe(train_dir: str, target_col: str):
     if not XGBOOST_AVAILABLE:
         return None
         
-    dtrain = xgb.DMatrix(
-        X,
-        label=y,
-        feature_names=feature_names_list,
-        enable_categorical=True,
-    )
+    dtrain = xgb.DMatrix(X, label=y)
     return dtrain
 
 def main():
@@ -159,10 +152,11 @@ def main():
     os.makedirs(MODEL_DIR, exist_ok=True)
     model_path = os.path.join(MODEL_DIR, "xgboost-model")
     
-    # Save in legacy binary format for XGBoost 1.7 compatibility
-    model.save_model(model_path)
-    print("✅ Saved model in binary format for XGBoost 1.7")
-    
+    # Save model using Pickle to ensure SageMaker inference compatibility
+    with open(model_path, "wb") as f:
+        pickle.dump(model, f)
+    print("✅ Saved model using Pickle for SageMaker compatibility")
+
     # Verify file
     files = os.listdir(MODEL_DIR)
     print(f"Files in MODEL_DIR: {files}")
