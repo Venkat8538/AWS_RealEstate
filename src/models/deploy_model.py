@@ -66,14 +66,19 @@ def deploy_model():
             status = desc['EndpointStatus']
             print(f"Current Endpoint Status: {status}")
 
-            if status == 'Failed' or status == 'Deleting':
-                print("Cleaning up non-functional endpoint...")
+            if status == 'Failed':
+                failure_reason = desc.get('FailureReason', 'Unknown')
+                print(f"⚠️ Endpoint Failed Previously: {failure_reason}")
+                print("Deleting failed endpoint...")
                 sm.delete_endpoint(EndpointName=endpoint_name)
-                time.sleep(20) # Buffer for deletion
+                time.sleep(30)
                 sm.create_endpoint(EndpointName=endpoint_name, EndpointConfigName=unique_config_name)
                 action = "RECREATED"
+            elif status in ['Creating', 'Updating']:
+                print(f"Endpoint already {status}, skipping deployment")
+                return
             else:
-                print(f"Updating existing endpoint to config: {unique_config_name}")
+                print(f"Updating endpoint to config: {unique_config_name}")
                 sm.update_endpoint(EndpointName=endpoint_name, EndpointConfigName=unique_config_name)
                 action = "UPDATED"
 
@@ -82,10 +87,22 @@ def deploy_model():
             sm.create_endpoint(EndpointName=endpoint_name, EndpointConfigName=unique_config_name)
             action = "CREATED"
 
-        # 5. Wait for 'InService'
-        print(f"⏳ Waiting for endpoint {endpoint_name} to be InService...")
-        waiter = sm.get_waiter('endpoint_in_service')
-        waiter.wait(EndpointName=endpoint_name, WaiterConfig={'Delay': 30, 'MaxAttempts': 20})
+        # 5. Monitor deployment with early failure detection
+        print(f"⏳ Monitoring endpoint {endpoint_name}...")
+        for attempt in range(15):  # 7.5 minutes max
+            time.sleep(30)
+            desc = sm.describe_endpoint(EndpointName=endpoint_name)
+            status = desc['EndpointStatus']
+            print(f"Attempt {attempt+1}/15: Status = {status}")
+            
+            if status == 'InService':
+                print("✅ Endpoint is InService")
+                break
+            elif status == 'Failed':
+                failure_reason = desc.get('FailureReason', 'Unknown')
+                raise Exception(f"Endpoint deployment failed: {failure_reason}")
+        else:
+            raise TimeoutError("Endpoint did not reach InService within 7.5 minutes")
 
         # 6. Final Metadata
         meta = {
