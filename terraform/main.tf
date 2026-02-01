@@ -150,13 +150,12 @@ module "deployment_pipeline" {
   github_token        = var.github_token
 }
 
-# Bamboo Server Module (temporarily disabled)
-# module "bamboo_server" {
-#   source     = "./modules/bamboo-server"
-#   
-#   project_name = var.project_name
-#   ami_id       = var.bamboo_ami_id
-#   key_name     = var.bamboo_key_name
-#   vpc_id       = var.bamboo_vpc_id
-#   subnet_id    = var.bamboo_subnet_id
-# }
+# Bamboo Server Module
+module "bamboo_server" {
+  source     = "./modules/bamboo-server"
+  
+  project_name = var.project_name
+  key_name     = var.bamboo_key_name
+  vpc_id       = var.bamboo_vpc_id
+  subnet_id    = var.bamboo_subnet_id
+}

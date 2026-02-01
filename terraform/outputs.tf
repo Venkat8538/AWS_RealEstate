@@ -90,12 +90,12 @@ output "mlflow_server_ip" {
   value       = module.mlflow_server.mlflow_server_ip
 }
 
-# output "bamboo_server_url" {
-#   description = "Bamboo Server URL"
-#   value       = module.bamboo_server.bamboo_url
-# }
+output "bamboo_server_url" {
+  description = "Bamboo Server URL"
+  value       = module.bamboo_server.bamboo_url
+}
 
-# output "bamboo_instance_id" {
-#   description = "Bamboo EC2 Instance ID"
-#   value       = module.bamboo_server.instance_id
-# }
+output "bamboo_instance_id" {
+  description = "Bamboo EC2 Instance ID"
+  value       = module.bamboo_server.instance_id
+}

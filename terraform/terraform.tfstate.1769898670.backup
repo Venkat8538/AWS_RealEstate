@@ -1,7 +1,7 @@
 {
   "version": 4,
   "terraform_version": "1.11.3",
-  "serial": 800,
+  "serial": 803,
   "lineage": "72d7e31b-8ddf-0c6c-1f81-c58fb1f70b8f",
   "outputs": {
     "airflow_server_ip": {
@@ -13,11 +13,11 @@
       "type": "string"
     },
     "bamboo_instance_id": {
-      "value": "i-0cdd1101630ba3c26",
+      "value": "i-0d5a17e1f97270f1e",
       "type": "string"
     },
     "bamboo_server_url": {
-      "value": "http://54.237.238.83:8085",
+      "value": "http://3.95.170.192:8085",
       "type": "string"
     },
     "deployment_codebuild_arn": {
@@ -497,6 +497,36 @@
     },
     {
       "module": "module.bamboo_server",
+      "mode": "data",
+      "type": "aws_ssm_parameter",
+      "name": "al2023_ami",
+      "provider": "provider[\"registry.terraform.io/hashicorp/aws\"]",
+      "instances": [
+        {
+          "schema_version": 0,
+          "attributes": {
+            "arn": "arn:aws:ssm:us-east-1::parameter/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "id": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "insecure_value": "ami-0532be01f26a3de55",
+            "name": "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64",
+            "type": "String",
+            "value": "ami-0532be01f26a3de55",
+            "version": 145,
+            "with_decryption": true
+          },
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "value"
+              }
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "module": "module.bamboo_server",
       "mode": "managed",
       "type": "aws_iam_instance_profile",
       "name": "bamboo_profile",
@@ -512,7 +542,7 @@
             "name_prefix": "",
             "path": "/",
             "role": "house-price-bamboo-role",
-            "tags": null,
+            "tags": {},
             "tags_all": {},
             "unique_id": "AIPAXARX4AAJGS3ZP5AYZ"
           },
@@ -520,7 +550,8 @@
           "private": "bnVsbA==",
           "dependencies": [
             "module.bamboo_server.aws_iam_role.bamboo_role"
-          ]
+          ],
+          "create_before_destroy": true
         }
       ]
     },
@@ -541,18 +572,21 @@
             "force_detach_policies": false,
             "id": "house-price-bamboo-role",
             "inline_policy": [],
-            "managed_policy_arns": [],
+            "managed_policy_arns": [
+              "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+            ],
             "max_session_duration": 3600,
             "name": "house-price-bamboo-role",
             "name_prefix": "",
             "path": "/",
             "permissions_boundary": "",
-            "tags": null,
+            "tags": {},
             "tags_all": {},
             "unique_id": "AROAXARX4AAJDL3AH5P4X"
           },
           "sensitive_attributes": [],
-          "private": "bnVsbA=="
+          "private": "bnVsbA==",
+          "create_before_destroy": true
         }
       ]
     },
@@ -588,8 +622,8 @@
         {
           "schema_version": 1,
           "attributes": {
-            "ami": "ami-066279af4a501d501",
-            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-0cdd1101630ba3c26",
+            "ami": "ami-0532be01f26a3de55",
+            "arn": "arn:aws:ec2:us-east-1:482227257362:instance/i-0d5a17e1f97270f1e",
             "associate_public_ip_address": true,
             "availability_zone": "us-east-1c",
             "capacity_reservation_specification": [
@@ -628,7 +662,7 @@
             "host_id": "",
             "host_resource_group_arn": null,
             "iam_instance_profile": "house-price-bamboo-profile",
-            "id": "i-0cdd1101630ba3c26",
+            "id": "i-0d5a17e1f97270f1e",
             "instance_initiated_shutdown_behavior": "stop",
             "instance_lifecycle": "",
             "instance_market_options": [],
@@ -658,8 +692,8 @@
             "password_data": "",
             "placement_group": "",
             "placement_partition_number": 0,
-            "primary_network_interface_id": "eni-05c27e994b345f0e1",
-            "private_dns": "ip-172-31-19-150.ec2.internal",
+            "primary_network_interface_id": "eni-0773603171cf15ef4",
+            "private_dns": "ip-172-31-28-214.ec2.internal",
             "private_dns_name_options": [
               {
                 "enable_resource_name_dns_a_record": false,
@@ -667,20 +701,20 @@
                 "hostname_type": "ip-name"
               }
             ],
-            "private_ip": "172.31.19.150",
-            "public_dns": "ec2-54-237-238-83.compute-1.amazonaws.com",
-            "public_ip": "54.237.238.83",
+            "private_ip": "172.31.28.214",
+            "public_dns": "ec2-3-95-170-192.compute-1.amazonaws.com",
+            "public_ip": "3.95.170.192",
             "root_block_device": [
               {
                 "delete_on_termination": true,
-                "device_name": "/dev/sda1",
+                "device_name": "/dev/xvda",
                 "encrypted": false,
                 "iops": 3000,
                 "kms_key_id": "",
                 "tags": null,
                 "tags_all": {},
                 "throughput": 125,
-                "volume_id": "vol-0dee53d716cbc29a6",
+                "volume_id": "vol-017874bef0fbbb5cc",
                 "volume_size": 50,
                 "volume_type": "gp3"
               }
@@ -702,19 +736,28 @@
             "timeouts": null,
             "user_data": "315bfcd1f1b86694460c7ace946d17706f22d080",
             "user_data_base64": null,
-            "user_data_replace_on_change": false,
+            "user_data_replace_on_change": true,
             "volume_tags": null,
             "vpc_security_group_ids": [
               "sg-03048dac5d8b09824"
             ]
           },
-          "sensitive_attributes": [],
+          "sensitive_attributes": [
+            [
+              {
+                "type": "get_attr",
+                "value": "ami"
+              }
+            ]
+          ],
           "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6MTIwMDAwMDAwMDAwMCwicmVhZCI6OTAwMDAwMDAwMDAwLCJ1cGRhdGUiOjYwMDAwMDAwMDAwMH0sInNjaGVtYV92ZXJzaW9uIjoiMSJ9",
           "dependencies": [
             "module.bamboo_server.aws_iam_instance_profile.bamboo_profile",
             "module.bamboo_server.aws_iam_role.bamboo_role",
-            "module.bamboo_server.aws_security_group.bamboo_sg"
-          ]
+            "module.bamboo_server.aws_security_group.bamboo_sg",
+            "module.bamboo_server.data.aws_ssm_parameter.al2023_ami"
+          ],
+          "create_before_destroy": true
         }
       ]
     },
@@ -788,7 +831,8 @@
             "vpc_id": "vpc-0ec06d2e45d4c6de8"
           },
           "sensitive_attributes": [],
-          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0="
+          "private": "eyJlMmJmYjczMC1lY2FhLTExZTYtOGY4OC0zNDM2M2JjN2M0YzAiOnsiY3JlYXRlIjo2MDAwMDAwMDAwMDAsImRlbGV0ZSI6OTAwMDAwMDAwMDAwfSwic2NoZW1hX3ZlcnNpb24iOiIxIn0=",
+          "create_before_destroy": true
         }
       ]
     },

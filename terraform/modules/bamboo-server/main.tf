@@ -1,18 +1,24 @@
-resource "aws_instance" "bamboo_server" {
-  ami                    = var.ami_id
-  instance_type          = var.instance_type
-  key_name              = var.key_name
-  vpc_security_group_ids = [aws_security_group.bamboo_sg.id]
-  subnet_id             = var.subnet_id
-  iam_instance_profile  = aws_iam_instance_profile.bamboo_profile.name
+data "aws_ssm_parameter" "al2023_ami" {
+  name = "/aws/service/ami-amazon-linux-latest/al2023-ami-kernel-6.1-x86_64"
+}
 
-  user_data = templatefile("${path.module}/linux_user_data.tpl", {
-    linux_host_ns = var.linux_host_ns
-  })
+resource "aws_instance" "bamboo_server" {
+  ami                       = data.aws_ssm_parameter.al2023_ami.value
+  instance_type             = var.instance_type
+  key_name                  = var.key_name
+  vpc_security_group_ids    = [aws_security_group.bamboo_sg.id]
+  subnet_id                 = var.subnet_id
+  iam_instance_profile      = aws_iam_instance_profile.bamboo_profile.name
+  user_data                 = file("${path.module}/linux_user_data.tpl")
+  user_data_replace_on_change = true
 
   root_block_device {
     volume_size = var.volume_size
     volume_type = "gp3"
+  }
+
+  lifecycle {
+    create_before_destroy = true
   }
 
   tags = {

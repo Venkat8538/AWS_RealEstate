@@ -2,11 +2,6 @@ variable "project_name" {
   type = string
 }
 
-variable "ami_id" {
-  type        = string
-  description = "Amazon Linux 2023 AMI ID"
-}
-
 variable "instance_type" {
   type    = string
   default = "t3.small"
