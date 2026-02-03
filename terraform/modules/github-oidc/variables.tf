@@ -8,6 +8,11 @@ variable "github_repository" {
   type        = string
 }
 
+variable "github_repository_streamlit" {
+  description = "GitHub repository for Streamlit UI in format 'owner/repo'"
+  type        = string
+}
+
 variable "s3_bucket_name" {
   description = "Name of the MLOps S3 bucket"
   type        = string

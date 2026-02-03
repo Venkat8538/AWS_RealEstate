@@ -1,5 +1,5 @@
 resource "aws_db_subnet_group" "airflow_db_subnet_group" {
-  name       = "${var.project_name}-airflow-db-subnet-group"
+  name       = "${lower(var.project_name)}-airflow-db-subnet-group"
   subnet_ids = data.aws_subnets.default.ids
 
   tags = {
@@ -8,7 +8,7 @@ resource "aws_db_subnet_group" "airflow_db_subnet_group" {
 }
 
 resource "aws_security_group" "airflow_db_sg" {
-  name_prefix = "${var.project_name}-airflow-db-"
+  name_prefix = "${lower(var.project_name)}-airflow-db-"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
@@ -31,7 +31,7 @@ resource "aws_security_group" "airflow_db_sg" {
 }
 
 resource "aws_db_instance" "airflow_db" {
-  identifier = "${var.project_name}-airflow-db"
+  identifier = "${lower(var.project_name)}-airflow-db"
   
   engine         = "postgres"
   engine_version = "15.7"

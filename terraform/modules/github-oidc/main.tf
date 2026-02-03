@@ -25,7 +25,12 @@ resource "aws_iam_role" "github_actions" {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
           StringLike = {
-            "token.actions.githubusercontent.com:sub" = "repo:${var.github_repository}:ref:refs/heads/master"
+            "token.actions.githubusercontent.com:sub" = [
+              "repo:${var.github_repository}:ref:refs/heads/*",
+              "repo:${var.github_repository}:pull_request",
+              "repo:${var.github_repository_streamlit}:ref:refs/heads/*",
+              "repo:${var.github_repository_streamlit}:pull_request",
+            ]
           }
         }
       }
@@ -75,6 +80,38 @@ resource "aws_iam_role_policy" "github_sagemaker_policy" {
           "iam:PassRole"
         ]
         Resource = var.sagemaker_role_arn
+      }
+    ]
+  })
+}
+
+# Policy for ECR access
+resource "aws_iam_role_policy" "github_ecr_policy" {
+  name = "${var.project_name}-github-ecr-policy"
+  role = aws_iam_role.github_actions.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:GetAuthorizationToken"
+        ]
+        Resource = "*"
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr:BatchCheckLayerAvailability",
+          "ecr:GetDownloadUrlForLayer",
+          "ecr:BatchGetImage",
+          "ecr:PutImage",
+          "ecr:InitiateLayerUpload",
+          "ecr:UploadLayerPart",
+          "ecr:CompleteLayerUpload"
+        ]
+        Resource = "arn:aws:ecr:*:*:repository/*"
       }
     ]
   })

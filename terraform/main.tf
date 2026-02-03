@@ -102,17 +102,18 @@ module "sagemaker_pipeline" {
 module "github_oidc" {
   source = "./modules/github-oidc"
   
-  project_name        = var.project_name
-  github_repository   = var.github_repository
-  s3_bucket_name      = module.s3.bucket_name
-  sagemaker_role_arn  = module.sagemaker.sagemaker_execution_role_arn
+  project_name                 = var.project_name
+  github_repository            = var.github_repository
+  github_repository_streamlit  = var.github_repository_streamlit
+  s3_bucket_name               = module.s3.bucket_name
+  sagemaker_role_arn           = module.sagemaker.sagemaker_execution_role_arn
 }
 
 # EKS Module for JupyterHub Platform
 module "eks" {
   source = "./modules/eks"
   
-  cluster_name       = "${var.project_name}-jupyterhub-cluster"
+  cluster_name       = "${var.project_name}-eks-cluster"
   kubernetes_version = "1.29"
   
   # Use existing VPC

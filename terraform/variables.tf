@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "project_name" {
   description = "Project name for resource naming"
   type        = string
-  default     = "house-price"
+  default     = "MLOps"
 }
 
 variable "environment" {
@@ -20,6 +20,12 @@ variable "github_repository" {
   description = "GitHub repository in format 'owner/repo'"
   type        = string
   default     = "Venkat8538/AWS_RealEstate"
+}
+
+variable "github_repository_streamlit" {
+  description = "GitHub repository for Streamlit UI in format 'owner/repo'"
+  type        = string
+  default     = "Venkat8538/mlops-streamlit-ui"
 }
 
 variable "github_token" {

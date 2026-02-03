@@ -78,6 +78,22 @@ resource "aws_ecr_repository" "evaluation" {
   }
 }
 
+# ECR Repository for Streamlit UI
+resource "aws_ecr_repository" "mlops_streamlit_ui" {
+  name                 = "mlops-streamlit-ui"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  tags = {
+    Name        = "${var.project_name}-mlops-streamlit-ui"
+    Environment = var.environment
+    Purpose     = "MLOps-Streamlit-UI"
+  }
+}
+
 # ECR Lifecycle Policies
 resource "aws_ecr_lifecycle_policy" "model_registration_policy" {
   repository = aws_ecr_repository.model_registration.name
@@ -180,6 +196,28 @@ resource "aws_ecr_lifecycle_policy" "evaluation_policy" {
           tagPrefixList = ["latest"]
           countType     = "imageCountMoreThan"
           countNumber   = 5
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_ecr_lifecycle_policy" "mlops_streamlit_ui_policy" {
+  repository = aws_ecr_repository.mlops_streamlit_ui.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Keep last 10 images"
+        selection = {
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 10
         }
         action = {
           type = "expire"

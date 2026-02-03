@@ -1,6 +1,6 @@
 # S3 Bucket for Single-Account MLOps
 resource "aws_s3_bucket" "mlops_bucket" {
-  bucket = "${var.project_name}-mlops-${var.environment}-${random_string.bucket_suffix.result}"
+  bucket = "house-price-mlops-${var.environment}-${random_string.bucket_suffix.result}"
 
   tags = {
     Name        = "${var.project_name}-mlops-bucket"

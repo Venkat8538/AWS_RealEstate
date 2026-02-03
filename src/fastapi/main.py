@@ -50,13 +50,31 @@ async def root():
     REQUEST_COUNT.labels(method='GET', endpoint='/').inc()
     return {"message": "House Price Prediction API", "docs": "/docs", "health": "/health"}
 
-# Health check endpoint
+# SageMaker health check endpoint (required)
+@app.get("/ping")
+async def ping():
+    REQUEST_COUNT.labels(method='GET', endpoint='/ping').inc()
+    return {"status": "healthy", "model_loaded": MODEL_LOADED}
+
+# Legacy health check endpoint
 @app.get("/health", response_model=dict)
 async def health_check():
     REQUEST_COUNT.labels(method='GET', endpoint='/health').inc()
     return {"status": "healthy", "model_loaded": MODEL_LOADED}
 
-# Prediction endpoint
+# SageMaker invocations endpoint (required)
+@app.post("/invocations", response_model=PredictionResponse)
+async def invocations(request: HousePredictionRequest):
+    start_time = time.time()
+    REQUEST_COUNT.labels(method='POST', endpoint='/invocations').inc()
+    PREDICTION_COUNT.inc()
+    
+    result = predict_price(request)
+    
+    REQUEST_DURATION.observe(time.time() - start_time)
+    return result
+
+# Legacy prediction endpoint
 @app.post("/predict", response_model=PredictionResponse)
 async def predict(request: HousePredictionRequest):
     start_time = time.time()
