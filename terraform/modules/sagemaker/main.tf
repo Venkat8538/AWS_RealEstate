@@ -72,11 +72,18 @@ resource "aws_iam_role_policy" "sagemaker_studio_permissions" {
         Action = [
           "sagemaker:CreatePresignedDomainUrl",
           "sagemaker:DescribeDomain",
+          "sagemaker:DescribeUserProfile",
           "sagemaker:ListDomains",
+          "sagemaker:ListTags",
           "sagemaker:CreateApp",
           "sagemaker:DeleteApp",
           "sagemaker:DescribeApp",
-          "sagemaker:ListApps"
+          "sagemaker:ListApps",
+          "sagemaker:ListPipelines",
+          "sagemaker:DescribePipeline",
+          "sagemaker:ListPipelineExecutions",
+          "sagemaker:DescribePipelineExecution",
+          "sagemaker:ListPipelineExecutionSteps"
         ]
         Resource = "*"
       }

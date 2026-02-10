@@ -11,7 +11,7 @@ app = FastAPI(
     description=(
         "An API for predicting house prices based on various features. "
         "This application is part of the MLOps Bootcamp by School of Devops. "
-        "Authored by Gourav Shah."
+        "Authored by Venkat."
     ),
     version="2.1.0",
     contact={

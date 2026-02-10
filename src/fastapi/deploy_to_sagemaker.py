@@ -15,6 +15,7 @@ REGION = "us-east-1"
 PROJECT_NAME = "house-price"
 IMAGE_NAME = f"{PROJECT_NAME}-fastapi"
 ENDPOINT_NAME = f"{PROJECT_NAME}-prod"
+TERRAFORM_PROJECT_NAME = "MLOps"  # Terraform uses different project name
 
 # Get AWS account ID
 sts = boto3.client('sts', region_name=REGION)
@@ -24,7 +25,7 @@ account_id = sts.get_caller_identity()['Account']
 ecr_uri = f"{account_id}.dkr.ecr.{REGION}.amazonaws.com/{IMAGE_NAME}"
 
 # SageMaker role (from Terraform output)
-sagemaker_role = f"arn:aws:iam::{account_id}:role/{PROJECT_NAME}-sagemaker-execution-role"
+sagemaker_role = f"arn:aws:iam::{account_id}:role/{TERRAFORM_PROJECT_NAME}-sagemaker-execution-role"
 
 # S3 model location
 s3_model_uri = f"s3://{PROJECT_NAME}-mlops-dev-itzi2hgi/models/trained/model.tar.gz"

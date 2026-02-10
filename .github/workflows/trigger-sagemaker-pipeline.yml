@@ -60,6 +60,23 @@ jobs:
           rm -rf scripts_temp scripts.tar.gz
           echo "✅ Scripts and tarball uploaded to S3"
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push FastAPI to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: house-price-fastapi
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd src/fastapi
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          echo "✅ FastAPI image pushed to ECR: $ECR_REGISTRY/$ECR_REPOSITORY:latest"
+
       - name: Pipeline Summary
         run: |
           echo "🎉 ML Pipeline Deployment Summary:"
@@ -67,4 +84,5 @@ jobs:
           echo "Commit: ${{ github.sha }}"
           echo "Branch: ${{ github.ref_name }}"
           echo "Pipeline: house-price-mlops-pipeline"
+          echo "FastAPI Image: house-price-fastapi:latest"
           echo "Status: Deployed and Executed"
